@@ -49,9 +49,9 @@ DADOS_ARQUEOLOGIA = {
         },
         "Subaquática": {
             "NAUFRAGIO": "Restos de uma embarcação que afundou.",
-            "NAVIO": "Embarcação antiga, principal foco desta subárea.",
+            "NAVIO": "Usado para navegar, principal foco desta subárea.",
             "ANCORA": "Objeto pesado usado para prender o navio ao fundo.",
-            "MARITIMA": "Relacionado ao mar, à navegação e aos oceanos.",
+            "PIROGA": "Tipo de embarcação indígena.",
             "INTERFACE": "O ponto de encontro entre a água e o sedimento."
         },
         "Zooarqueologia": {
