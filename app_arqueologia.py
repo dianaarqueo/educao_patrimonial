@@ -87,7 +87,7 @@ def inicializar_estado_do_jogo():
 def limpar_resposta(resposta):
     """Normaliza a resposta do usuário para comparação."""
     # Remove espaços, converte para maiúsculas e remove acentos/caracteres especiais (simples)
-    return resposta.strip().upper().replace(" ", "").replace("Ç", "C").replace("ÃO", "AO").replace("Á", "A")
+    return resposta.strip().upper().replace(" ", "").replace("Ç", "C").replace("ÃO", "AO").replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Â", "A")
 
 def carregar_nivel(nome_nivel):
     """Carrega as palavras para um nível e inicia o estado."""
