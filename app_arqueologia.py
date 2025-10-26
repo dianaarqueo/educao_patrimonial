@@ -6,12 +6,12 @@ DADOS_ARQUEOLOGIA = {
     "Fácil": {
         "VESTIGIO": "Qualquer marca material de atividade humana deixada no passado.",
         "ESCAVACAO": "O processo de remoção sistemática de solo e registro de achados.",
-        "CULTURA": "O conjunto de hábitos, crenças e modos de vida de um grupo antigo.",
+        "CULTURA": "O conjunto de hábitos, crenças e modos de vida de um grupo.",
         "RUINA": "O que resta de uma estrutura ou edificação antiga destruída.",
         "HISTORIA": "O estudo do passado humano após o surgimento da escrita.",
         "CERAMICA": "Artefato comum feito de argila cozida, como potes e vasos.",
         "CAMADA": "Estrato de solo, areia ou depósitos, essencial para a datação.",
-        "SITIO": "O local onde são encontrados e estudados os restos arqueológicos.",
+        "SITIO": "O local onde são encontrados e estudados os materiais arqueológicos.",
         "MUSEU": "Local de preservação e exibição de artefatos.",
         "PRE HISTORIA": "O período da humanidade anterior à invenção da escrita.",
         "ARTEFATO": "Qualquer objeto feito ou modificado por humanos."
@@ -33,9 +33,9 @@ DADOS_ARQUEOLOGIA = {
         "PERCUTOR": "Ferramenta usada para golpear outra (por exemplo, para lascar pedra).",
         "TAFONOMIA": "Estudo de como os organismos e objetos se tornam fósseis ou vestígios.",
         "ETNOARQUEOLOGIA": "Estudo de sociedades vivas para entender o registro arqueológico.",
-        "ANTROPOFAGIA": "Prática de consumir carne humana, um tema de estudo em restos ósseos.",
-        "PALEOPATOLOGIA": "Estudo de doenças e lesões em restos humanos antigos.",
-        "ACERVO": "O conjunto total de itens e dados coletados em uma pesquisa ou guardados em um museu.",
+        "ANTROPOFAGIA": "Prática de consumir carne humana, um tema de estudo em remanescentes humanos.",
+        "PALEOPATOLOGIA": "Estudo de doenças e lesões em remanescentes humanos antigos.",
+        "ACERVO": "O conjunto total de itens e dados coletados em uma pesquisa e guardados em um museu ou reserva técnica.",
         "CONTEXTO": "A localização precisa e a relação de um artefato com seu entorno.",
         "PALEOAMBIENTE": "O ambiente e as condições climáticas de uma época passada."
     },
@@ -58,7 +58,7 @@ DADOS_ARQUEOLOGIA = {
             "OSTEOLOGIA": "O estudo dos ossos (chave para identificar restos de fauna).",
             "FAUNA": "O conjunto de espécies animais de um sítio.",
             "ESQUELETO": "Estrutura óssea que ajuda a identificar o animal.",
-            "DIETA": "O que os humanos antigos comiam, inferido pelos restos de animais.",
+            "DIETA": "O que os grupos consumiam, inferido pelos restos de animais.",
             "DOMESTICACAO": "Processo de tornar espécies selvagens dependentes do ser humano."
         },
         "Geoarqueologia": {
