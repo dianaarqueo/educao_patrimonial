@@ -256,7 +256,7 @@ def mostrar_tela_jogo():
             st.error(st.session_state.mensagem_feedback)
             
     # Botão para sair do nível
-    st.button("Abandonar Nível e Voltar", on_click=inicializar_estado_do_jogo)
+    st.button("Próxima pergunta", on_click=inicializar_estado_do_jogo)
 
 
 # --- 4. FUNÇÃO PRINCIPAL DE EXECUÇÃO ---
