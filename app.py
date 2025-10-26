@@ -3,6 +3,65 @@
 import streamlit as st
 import random
 
+# --- 0. FUNÇÃO PARA INJETAR ESTILO CSS ---
+def adicionar_estilo_css():
+    """Injeta CSS personalizado para fundo, fontes e layout."""
+    
+    # URL de uma imagem de fundo (ex: papel antigo ou mapa)
+    # ATENÇÃO: Use URLs HTTPS de imagens públicas (ex: Imgur, Pixabay, etc.)
+    # Esta é uma URL de exemplo. Você pode trocar por uma de sua preferência.
+    BACKGROUND_URL = "https://i.imgur.com/k6rQx5j.png" # Exemplo: textura de pergaminho/mapa
+
+    css = f"""
+    <style>
+    /* 1. Fundo do Aplicativo (Main App Container) */
+    [data-testid="stAppViewContainer"] {{
+        background-image: url("{BACKGROUND_URL}");
+        background-size: cover;
+        background-attachment: fixed; /* Mantém o fundo fixo ao rolar */
+    }}
+
+    /* 2. Fundo da Barra Lateral (Sidebar) */
+    [data-testid="stSidebar"] {{
+        background-color: rgba(255, 250, 240, 0.7); /* Bege claro semi-transparente */
+        border-right: 2px solid #a0522d; /* Borda marrom */
+    }}
+
+    /* 3. Fundo do Conteúdo Principal (para melhorar a leitura) */
+    .main > div {{
+        background-color: rgba(255, 255, 255, 0.6); /* Fundo branco semi-transparente */
+        padding: 20px;
+        border-radius: 10px;
+    }}
+    
+    /* 4. Fontes e Cores */
+    html, body, [class*="css"] {{
+        font-family: Georgia, serif; /* Fonte clássica/serif */
+        color: #333333; /* Texto em cinza escuro */
+    }}
+    
+    /* Títulos */
+    h1, h2, h3, h4, h5, h6 {{
+        color: #5d4037; /* Marrom escuro */
+        font-family: 'Times New Roman', serif;
+        border-bottom: 2px solid #5d4037;
+        padding-bottom: 5px;
+    }}
+
+    /* Estilo da Palavra Secreta */
+    code {{
+        background-color: #f0e68c; /* Cor de papiro/ouro claro */
+        color: #8b4513; /* Marrom para destaque */
+        padding: 5px;
+        border-radius: 3px;
+        font-weight: bold;
+        font-size: 1.2em;
+    }}
+    
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
 # --- 1. Dicionário de Palavras e Dicas FINAL ---
 DICIONARIO_ARQUEOLOGIA = {
     "Fácil": {
