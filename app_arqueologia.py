@@ -186,7 +186,7 @@ h1, h2, h3 {
 
 def mostrar_tela_inicial():
     """Mostra a tela de seleção de nível."""
-    st.title("🗺️ Arqueologia em Camadas")
+    st.title("🗺️ Mistério Arqueológico")
     st.header("Selecione o seu Nível de Descoberta")
 
     col1, col2, col3 = st.columns(3)
