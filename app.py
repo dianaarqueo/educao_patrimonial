@@ -7,16 +7,11 @@ import random
 def adicionar_estilo_css():
     """Injeta CSS personalizado para fundo, fontes e layout."""
     
-    # URL de uma imagem de fundo (ex: papel antigo ou mapa)
-    # ATENÇÃO: Use URLs HTTPS de imagens públicas (ex: Imgur, Pixabay, etc.)
-    # Esta é uma URL de exemplo. Você pode trocar por uma de sua preferência.
-    BACKGROUND_URL = "https://i.imgur.com/k6rQx5j.png" # Exemplo: textura de pergaminho/mapa
-
     css = f"""
     <style>
     /* 1. Fundo do Aplicativo (Main App Container) */
     [data-testid="stAppViewContainer"] {{
-        background-image: url("{BACKGROUND_URL}");
+        background-image: url("{https://pixabay.com/pt/illustrations/ai-gerado-solo-camadas-8996005/}");
         background-size: cover;
         background-attachment: fixed; /* Mantém o fundo fixo ao rolar */
     }}
