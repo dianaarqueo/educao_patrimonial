@@ -52,7 +52,7 @@ DADOS_ARQUEOLOGIA = {
             "NAVIO": "Usado para navegar, principal foco desta subárea.",
             "ANCORA": "Objeto pesado usado para prender o navio ao fundo.",
             "PIROGA": "Tipo de embarcação indígena.",
-            "INTERFACE": "O ponto de encontro entre a água e o sedimento."
+            "INTERFACE": "Faixa de transição entre a água e o sedimento."
         },
         "Zooarqueologia": {
             "OSTEOLOGIA": "O estudo dos ossos (chave para identificar restos de fauna).",
@@ -87,7 +87,8 @@ def inicializar_estado_do_jogo():
 def limpar_resposta(resposta):
     """Normaliza a resposta do usuário para comparação."""
     # Remove espaços, converte para maiúsculas e remove acentos/caracteres especiais (simples)
-    return resposta.strip().upper().replace(" ", "").replace("Ç", "C").replace("ÃO", "AO").replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Â", "A")
+    return resposta.strip().upper().replace(" ", "").replace("Ç", "C").replace("ÃO", "AO").replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Â", "A").replace("Ú", "U")
+
 
 def carregar_nivel(nome_nivel):
     """Carrega as palavras para um nível e inicia o estado."""
