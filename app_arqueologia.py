@@ -58,7 +58,7 @@ DADOS_ARQUEOLOGIA = {
             "OSTEOLOGIA": "O estudo dos ossos (chave para identificar restos de fauna).",
             "FAUNA": "O conjunto de espécies animais de um sítio.",
             "ESQUELETO": "Estrutura óssea que ajuda a identificar o animal.",
-            "DIETA": "O que os grupos consumiam, inferido pelos restos de animais.",
+            "DIETA": "O que os grupos consumiam, inferido pelos restos de animais e vegetais.",
             "DOMESTICACAO": "Processo de tornar espécies selvagens dependentes do ser humano."
         },
         "Geoarqueologia": {
