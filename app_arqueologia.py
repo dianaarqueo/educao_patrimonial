@@ -18,14 +18,14 @@ DADOS_ARQUEOLOGIA = {
     },
     "Médio": {
         "ESTRATIGRAFIA": "O estudo das camadas de solo e sua cronologia de deposição.",
-        "PINTURA RUPESTRE": "Arte feita em paredes de cavernas ou abrigos rochosos.",
+        "PINTURA RUPESTRE": "Arte feita em paredes de cavernas ou abrigos rochosos (geralmente vermelho).",
         "DATAÇAO": "Técnica usada para determinar a idade de um achado ou sítio.",
         "TIPOLOGIA": "Classificação de artefatos por forma, estilo e função.",
         "PROSPECCAO": "Busca e reconhecimento preliminar de sítios na paisagem.",
-        "JAZIDA": "Um local rico em vestígios, sinônimo de sítio arqueológico.",
+        "TOPOGRAFIA": "A ciência de medição e representação detalhada do relevo, contornos e acidentes naturais e artificiais de uma porção de terra.",
         "SEPULTAMENTO": "O ato de enterrar um indivíduo com ou sem oferendas.",
         "RADIOCARBONO": "Método de datação que mede o decaimento do isótopo Carbono-14.",
-        "LITICO": "Relativo à pedra; usado para descrever ferramentas.",
+        "LITICO": "Ferramentas de pedra.",
         "INDUSTRIA": "Conjunto de artefatos de pedra que compartilham a mesma técnica de fabricação."
     },
     "Difícil": {
