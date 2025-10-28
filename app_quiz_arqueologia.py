@@ -246,10 +246,10 @@ def mostrar_tela_inicial():
     with col2:
         st.button("Nível 2: MÉDIO (Técnicas de Campo)", on_click=carregar_nivel, args=("Médio",), use_container_width=True)
     with col3:
-        st.button("Nível 3: DIFÍCIL (Teoria Avançada)", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
+        st.button("Nível 3: DIFÍCIL (Teoria)", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
 
     # Níveis Específicos
-    st.subheader("Nível 4: ESPECÍFICOS (Subáreas - Visualmente Temático)")
+    st.subheader("Nível 4: ESPECÍFICOS (Subáreas)")
     col_sub1, col_sub2, col_sub3, col_sub4 = st.columns(4)
     with col_sub1:
         st.button("Clássica", on_click=carregar_nivel, args=("Clássica",), help="Egiptologia, Roma, Grécia.", use_container_width=True)
