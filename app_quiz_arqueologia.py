@@ -103,6 +103,30 @@ def inicializar_estado_do_jogo():
     st.session_state.mensagem_feedback = ""
     st.session_state.fase_jogo = "inicio"
     st.session_state.pontuacao_total = 0
+    st.session_state.resposta_verificada = False  # <--- NOVO ESTADO AQUI
+
+def avancar_pergunta():
+    """Limpa o feedback, avança o índice e verifica se o nível terminou."""
+    st.session_state.resposta_verificada = False
+    st.session_state.mensagem_feedback = ""
+    
+    # Avança para a próxima palavra
+    st.session_state.indice_palavra += 1
+    
+    # Verifica se o nível terminou após o avanço
+    if st.session_state.indice_palavra >= st.session_state.total_palavras:
+        st.session_state.fase_jogo = "finalizado"
+
+def verificar_resposta_quiz(resposta_selecionada, palavra_correta):
+    """Verifica a resposta, dá feedback e muda o estado para verificado."""
+    st.session_state.resposta_verificada = True # Muda o estado para verificado
+    
+    if resposta_selecionada == palavra_correta:
+        st.session_state.mensagem_feedback = f"✅ **Resposta Certa!** A palavra é: *{palavra_correta}*."
+        st.session_state.palavras_corretas += 1
+        st.session_state.pontuacao_total += 1
+    else:
+        st.session_state.mensagem_feedback = f"❌ **Resposta Errada.** A correta era: *{palavra_correta}*."
 
 def carregar_nivel(nome_nivel):
     """Carrega as palavras para um nível e inicia o estado."""
@@ -279,22 +303,35 @@ def mostrar_tela_jogo():
             "Alternativas:",
             alternativas,
             key=f"radio_{indice}",
-            index=None # Começa sem nenhuma opção selecionada
+            disabled=st.session_state.resposta_verificada, # Desabilita após verificar
+            index=None
         )
         
-        # O botão de submissão do formulário
-        submit_button = st.form_submit_button(label='Escavar e Verificar')
+        # --- Lógica do Botão Dinâmico ---
+        col_btn1, col_btn2 = st.columns([1, 4])
         
-        if submit_button:
-            if resposta_selecionada:
-                # Chama a função de verificação e avança o índice
-                verificar_resposta_quiz(resposta_selecionada, palavra_correta)
-                # O rerun faz a página recarregar, aplicando a nova mensagem de feedback e a próxima pergunta
-                st.rerun() 
+        with col_btn1:
+            if not st.session_state.resposta_verificada:
+                # Botão 'Verificar' - Visível antes de responder
+                submit_button = st.form_submit_button(label='Escavar e Verificar')
+                
+                if submit_button:
+                    if resposta_selecionada:
+                        # Chama a função de verificação e atualiza o estado de feedback
+                        verificar_resposta_quiz(resposta_selecionada, palavra_correta)
+                        # O Streamlit irá rodar novamente, exibindo o feedback e o botão 'Próxima'
+                        st.rerun() 
+                    else:
+                        st.warning("Por favor, selecione uma alternativa antes de verificar!")
             else:
-                st.warning("Por favor, selecione uma alternativa antes de verificar!")
-
-    # Feedback da última tentativa
+                # Botão 'Próxima Pergunta' - Visível após responder
+                # Este botão não precisa estar dentro do st.form para avançar o estado.
+                # No entanto, vamos mantê-lo aqui para organização visual.
+                if st.form_submit_button(label='Próxima Pergunta >>'):
+                    avancar_pergunta()
+                    st.rerun()
+                
+    # Feedback da última tentativa (Exibido após verificar)
     if st.session_state.mensagem_feedback:
         if "Certa" in st.session_state.mensagem_feedback:
             st.success(st.session_state.mensagem_feedback)
