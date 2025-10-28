@@ -72,8 +72,24 @@ DADOS_ARQUEOLOGIA = {
     }
 }
 
+# --- 1. ESTRUTURA DE DADOS COM DICAS SIMPLIFICADAS ---
+# ... (Seu DADOS_ARQUEOLOGIA aqui) ...
+
 # Lista de todos os termos (para criar alternativas falsas)
-TODAS_AS_PALAVRAS = [palavra for nivel in DADOS_ARQUEOLOGIA.values() for item in (nivel.values() if isinstance(nivel, dict) else nivel.values()) for palavra in (item if isinstance(item, dict) else item.keys())]
+def extrair_todas_as_palavras(dados):
+    """Extrai todas as palavras-chave de todos os níveis, tratando o aninhamento."""
+    todas_palavras = []
+    for nivel, conteudo in dados.items():
+        if nivel == "Específicos":
+            # Caso de dicionário aninhado (Subáreas)
+            for subarea, palavras_dicas in conteudo.items():
+                todas_palavras.extend(palavras_dicas.keys())
+        else:
+            # Caso de dicionário simples (Níveis Regulares)
+            todas_palavras.extend(conteudo.keys())
+    return todas_palavras
+
+TODAS_AS_PALAVRAS = extrair_todas_as_palavras(DADOS_ARQUEOLOGIA)
 
 # --- 2. FUNÇÕES DE LÓGICA E MÚLTIPLA ESCOLHA ---
 
