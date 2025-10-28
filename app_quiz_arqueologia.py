@@ -196,7 +196,7 @@ def aplicar_tema(nivel):
 
 def mostrar_tela_inicial():
     """Mostra a tela de seleção de nível."""
-    st.title("🗺️ Arqueologia em Camadas: O Quiz")
+    st.title("🗺️ Mistério Arqueológico")
     st.header("Selecione o seu Nível de Descoberta")
     
     # Níveis Regulares
