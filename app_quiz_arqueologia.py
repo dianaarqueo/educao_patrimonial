@@ -267,20 +267,6 @@ def aplicar_tema(nivel):
     }}
     </style>
     """, unsafe_allow_html=True)
-    fundo_img, cor_texto, sombra = temas.get(nivel, (None, cores_texto, 'none'))
-    
-    if fundo_img:
-        st.markdown(f"""
-        <style>
-        .stApp {{
-            background-image: {fundo_img}; 
-            background-size: cover; 
-            background-attachment: fixed; 
-            color: {cor_texto}; 
-            text-shadow: {sombra};
-        }}
-        </style>
-        """, unsafe_allow_html=True)
     else:
         # Níveis Padrão (Fácil, Médio, Difícil)
         st.markdown(f'<style>.stApp {{background-color: {fundo_padrao}; color: {cores_texto};}}</style>', unsafe_allow_html=True)
