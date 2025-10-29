@@ -267,11 +267,7 @@ def aplicar_tema(nivel):
     }}
     </style>
     """, unsafe_allow_html=True)
-    else:
-        # Níveis Padrão (Fácil, Médio, Difícil)
-        st.markdown(f'<style>.stApp {{background-color: {fundo_padrao}; color: {cores_texto};}}</style>', unsafe_allow_html=True)
-
-
+    
     # --- 4. EXIBIÇÃO DA INTERFACE ---
 
 def mostrar_tela_inicial():
