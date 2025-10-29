@@ -209,61 +209,99 @@ def submeter_resposta(palavra_correta):
         st.session_state.mensagem_feedback = f"❌ **Resposta Errada.** A correta era: *{palavra_correta}*."
 
 
-# --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO) ---
+# --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO REFINADO) ---
 
 def aplicar_tema(nivel):
-    """Aplica o CSS com base no tema escolhido para os níveis específicos (usando cores estáveis)."""
+    """Aplica o CSS com alto contraste, cores temáticas e decoração para cada subárea."""
     
-    # Estilo base 'Caderno de Campo' (padrão)
-    fundo_padrao = "#F5F5DC"  # Bege/Creme (Fundo de Papel)
-    cores_texto_padrao = "#4B3832" # Marrom Escuro
-
-    # Temas Estáveis para Níveis Específicos
+    # 1. TEMAS E CORES PRINCIPAIS (Alto Contraste Garantido)
+    
+    # Cor de fundo padrão (Níveis Fácil/Médio/Difícil)
+    FUNDO_PADRAO = "#F5F5DC"  # Bege claro (papel de campo)
+    TEXTO_PADRAO = "#4B3832" # Marrom escuro
+    
+    # Mapeamento de estilos temáticos
     temas = {
-        # Clássica: Cor de Papiro e Areia
-        "Clássica": ('background-color: #F8F4E3; color: #6D5B4F;', '#6D5B4F'),
-        # Subaquática: Gradiente de Azul Profundo
-        "Subaquática": ('background: linear-gradient(to bottom, #001f3f, #003366); color: white;', 'white'),
-        # Zooarqueologia: Cor de Osso e Terra
-        "Zooarqueologia": ('background-color: #ECECEC; color: #4F4F4F;', '#4F4F4F'),
-        # Geoarqueologia: Gradiente de Estratos (Terra e Rocha)
-        "Geoarqueologia": ('background: linear-gradient(to bottom, #964B00, #333333); color: #F5F5DC;', '#F5F5DC'),
+        # Clássica: Papiro e Hieróglifos.
+        "Clássica": {
+            'estilo_fundo': 'background-color: #F8F4E3;', # Papiro claro
+            'cor_texto': '#8B4513', # Marrom Sépia
+            'emoji': "🏺🏛️"
+        },
+        # Subaquática: Oceano Profundo e Tesouros.
+        "Subaquática": {
+            'estilo_fundo': 'background: linear-gradient(to bottom, #001f3f, #003366);', # Gradiente Azul Marinho
+            'cor_texto': '#ADD8E6', # Azul Claro (Alto Contraste)
+            'emoji': "🌊⚓"
+        },
+        # Zooarqueologia: Ossos e Natureza.
+        "Zooarqueologia": {
+            'estilo_fundo': 'background-color: #F0F0F0;', # Osso/Marfim
+            'cor_texto': '#36454F', # Cinza Ardósia (Alto Contraste)
+            'emoji': "🦴🌿"
+        },
+        # Geoarqueologia: Estratos de Solo e Rochas.
+        "Geoarqueologia": {
+            'estilo_fundo': 'background: linear-gradient(to bottom, #A0522D, #696969);', # Marrom Terra a Cinza Rocha
+            'cor_texto': '#FFDAB9', # Pêssego Claro (Alto Contraste)
+            'emoji': "⛰️🪨"
+        }
     }
 
-    # Seleciona o estilo e a cor principal
-    estilo_aplicar, cor_primaria = temas.get(nivel, (f'background-color: {fundo_padrao}; color: {cores_texto_padrao};', cores_texto_padrao))
+    # Seleciona o tema ou usa o padrão
+    tema_config = temas.get(nivel, {
+        'estilo_fundo': f'background-color: {FUNDO_PADRAO};',
+        'cor_texto': TEXTO_PADRAO,
+        'emoji': "🔎"
+    })
     
-    # Injeta o estilo de fundo
+    estilo_aplicar = tema_config['estilo_fundo'] + f'color: {tema_config["cor_texto"]};'
+    cor_primaria = tema_config['cor_texto']
+
+    # Injeta o estilo de fundo no Streamlit App
     st.markdown(
         f'<style>.stApp {{ {estilo_aplicar} }}</style>', 
         unsafe_allow_html=True
     )
 
-    # CSS Comum para Botões e Títulos (Garanti a herança de cor)
+    # 2. APLICAÇÃO DE DECORAÇÃO NO TÍTULO
+    
+    # Adiciona o emoji temático ao título do nível
+    if st.session_state.nivel_atual:
+        emoji = tema_config['emoji']
+        st.sidebar.markdown(f"### {emoji} **Nível Atual: {st.session_state.nivel_atual}**")
+    
+    # 3. CSS COMUM (Garantindo Consistência)
     st.markdown(f"""
     <style>
+    /* Estilos para Títulos (Herda cor do tema) */
     h1, h2, h3 {{
-        color: {cor_primaria} !important; /* Usa a cor temática para títulos */
+        color: {cor_primaria} !important; 
         border-bottom: 2px solid #D2B48C;
         padding-bottom: 5px;
     }}
+    /* Botões */
     .stButton>button {{
-        background-color: #6B8E23; /* Verde Musgo */
+        background-color: #6B8E23; 
         color: white;
         border: none;
         border-radius: 5px;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
         font-weight: bold;
     }}
-    /* Estilo para a área de dica (bloco de texto) - Fundo claro para leitura */
+    /* Área de Dica (Manter sempre claro para máxima legibilidade) */
     .stMarkdown p {{
         font-size: 1.2em;
         padding: 15px;
         border: 1px solid #D2B48C;
-        background-color: rgba(255, 255, 240, 0.8); /* Fundo semi-transparente para leitura */
+        background-color: rgba(255, 255, 240, 0.9); /* Fundo quase branco semi-transparente */
         border-radius: 8px;
-        color: #4B3832; /* Cor de texto padrão para garantir contraste na dica */
+        color: #4B3832; /* Texto escuro para alto contraste na caixa de dica */
         text-shadow: none;
+    }}
+    /* Cores das Alternativas de Rádio (Garante que o texto do rádio seja legível contra o fundo) */
+    .stRadio label > div:first-child {{
+        color: {cor_primaria};
     }}
     </style>
     """, unsafe_allow_html=True)
