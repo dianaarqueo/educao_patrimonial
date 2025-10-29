@@ -162,13 +162,61 @@ def carregar_nivel(nome_nivel):
 
 def gerar_alternativas(palavra_correta):
     """Gera três alternativas, sendo uma a correta."""
-    # Lista de palavras que não são a correta
-    outras_palavras = [p for p in TODAS_AS_PALAVRAS if p != palavra_correta]
+    # Mantenha esta função auxiliar (ela está correta)
+def get_palavras_do_contexto(nome_nivel):
+    """
+    Retorna a lista de todas as palavras (chaves) de um nível ou subárea.
+    """
+    if nome_nivel in DADOS_ARQUEOLOGIA:
+        return list(DADOS_ARQUEOLOGIA[nome_nivel].keys())
+    elif nome_nivel in DADOS_ARQUEOLOGIA["Específicos"]:
+        return list(DADOS_ARQUEOLOGIA["Específicos"][nome_nivel].keys())
+    return []
+
+# Mantenha esta lista (ela é essencial)
+TODAS_AS_PALAVRAS = extrair_todas_as_palavras(DADOS_ARQUEOLOGIA)
+
+
+# Função com a lógica refinada (substitua a sua versão anterior)
+def gerar_alternativas(palavra_correta, nome_nivel):
+    """
+    Gera três alternativas contextuais (uma correta e duas do mesmo contexto), 
+    priorizando o contexto restrito do nível/subárea.
+    """
     
-    # Escolhe 2 alternativas falsas
-    alternativas_falsas = random.sample(outras_palavras, 2)
+    palavras_contexto = get_palavras_do_contexto(nome_nivel)
     
-    # Monta a lista final e embaralha a ordem
+    # 1. Tenta tirar palavras do contexto imediato (mesmo nível/subárea)
+    distratores_potenciais = [p for p in palavras_contexto if p != palavra_correta]
+    
+    alternativas_falsas = []
+    
+    if len(distratores_potenciais) >= 2:
+        # Se houver palavras suficientes no contexto, usa 2 delas
+        alternativas_falsas = random.sample(distratores_potenciais, 2)
+    else:
+        # Se houver 0 ou 1, usa o que tem e busca o restante em outras palavras relevantes (global)
+        alternativas_falsas = distratores_potenciais
+        
+        # 2. Preenche com palavras aleatórias mais amplas se o contexto for pequeno
+        num_faltante = 2 - len(alternativas_falsas)
+        
+        if num_faltante > 0:
+             # Palavras globais que não foram usadas e não são a resposta correta
+            outras_palavras_globais = [
+                p for p in TODAS_AS_PALAVRAS 
+                if p != palavra_correta and p not in alternativas_falsas
+            ]
+            
+            # Se a lista global tiver palavras suficientes, preenche
+            if len(outras_palavras_globais) >= num_faltante:
+                alternativas_falsas.extend(random.sample(outras_palavras_globais, num_faltante))
+            else:
+                # Caso extremo: repete uma palavra ou usa qualquer coisa se o banco for minúsculo
+                # (Garantia de que sempre haverá 3 opções)
+                alternativas_falsas.extend(random.sample(TODAS_AS_PALAVRAS, num_faltante))
+
+    # 3. Monta a lista final e embaralha a ordem
     alternativas = [palavra_correta] + alternativas_falsas
     random.shuffle(alternativas)
     return alternativas
