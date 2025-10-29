@@ -212,20 +212,61 @@ def submeter_resposta(palavra_correta):
 # --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO) ---
 
 def aplicar_tema(nivel):
-    """Aplica o CSS com base no tema escolhido para os níveis específicos."""
+    """Aplica o CSS com base no tema escolhido para os níveis específicos (usando cores estáveis)."""
     
     # Estilo base 'Caderno de Campo' (padrão)
     fundo_padrao = "#F5F5DC"  # Bege/Creme (Fundo de Papel)
-    cores_texto = "#4B3832" # Marrom Escuro
-    
-    # Mapeamento de temas visuais (usando imagens de exemplo)
+    cores_texto_padrao = "#4B3832" # Marrom Escuro
+
+    # Temas Estáveis para Níveis Específicos
     temas = {
-        "Clássica": ('url("https://i.imgur.com/8Q0v8rP.jpg")', cores_texto), # Papiro/Areia
-        "Subaquática": ('url("https://i.imgur.com/uR2N88W.jpg")', 'white', '1px 1px 2px black'), # Água/Marinho
-        "Zooarqueologia": ('url("https://i.imgur.com/jM8c3ZJ.jpg")', cores_texto), # Osso/Cinza Claro
-        "Geoarqueologia": ('url("https://i.imgur.com/6XzW8Gg.jpg")', cores_texto), # Estratos/Solo Vermelho
+        # Clássica: Cor de Papiro e Areia
+        "Clássica": ('background-color: #F8F4E3; color: #6D5B4F;', '#6D5B4F'),
+        # Subaquática: Gradiente de Azul Profundo
+        "Subaquática": ('background: linear-gradient(to bottom, #001f3f, #003366); color: white;', 'white'),
+        # Zooarqueologia: Cor de Osso e Terra
+        "Zooarqueologia": ('background-color: #ECECEC; color: #4F4F4F;', '#4F4F4F'),
+        # Geoarqueologia: Gradiente de Estratos (Terra e Rocha)
+        "Geoarqueologia": ('background: linear-gradient(to bottom, #964B00, #333333); color: #F5F5DC;', '#F5F5DC'),
     }
 
+    # Seleciona o estilo e a cor principal
+    estilo_aplicar, cor_primaria = temas.get(nivel, (f'background-color: {fundo_padrao}; color: {cores_texto_padrao};', cores_texto_padrao))
+    
+    # Injeta o estilo de fundo
+    st.markdown(
+        f'<style>.stApp {{ {estilo_aplicar} }}</style>', 
+        unsafe_allow_html=True
+    )
+
+    # CSS Comum para Botões e Títulos (Garanti a herança de cor)
+    st.markdown(f"""
+    <style>
+    h1, h2, h3 {{
+        color: {cor_primaria} !important; /* Usa a cor temática para títulos */
+        border-bottom: 2px solid #D2B48C;
+        padding-bottom: 5px;
+    }}
+    .stButton>button {{
+        background-color: #6B8E23; /* Verde Musgo */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        font-weight: bold;
+    }}
+    /* Estilo para a área de dica (bloco de texto) - Fundo claro para leitura */
+    .stMarkdown p {{
+        font-size: 1.2em;
+        padding: 15px;
+        border: 1px solid #D2B48C;
+        background-color: rgba(255, 255, 240, 0.8); /* Fundo semi-transparente para leitura */
+        border-radius: 8px;
+        color: #4B3832; /* Cor de texto padrão para garantir contraste na dica */
+        text-shadow: none;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
     fundo_img, cor_texto, sombra = temas.get(nivel, (None, cores_texto, 'none'))
     
     if fundo_img:
@@ -245,37 +286,7 @@ def aplicar_tema(nivel):
         st.markdown(f'<style>.stApp {{background-color: {fundo_padrao}; color: {cores_texto};}}</style>', unsafe_allow_html=True)
 
 
-    # CSS Comum para Botões e Títulos (Estilo Caderno de Campo)
-    st.markdown("""
-    <style>
-    h1, h2, h3 {
-        color: inherit; /* Herda cor do tema */
-        border-bottom: 2px solid #D2B48C;
-        padding-bottom: 5px;
-    }
-    .stButton>button {
-        background-color: #6B8E23; /* Verde Musgo */
-        color: white;
-        border: none;
-        border-radius: 5px;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-        font-weight: bold;
-    }
-    /* Estilo para a área de dica (bloco de texto) */
-    .stMarkdown p {
-        font-size: 1.2em;
-        padding: 15px;
-        border: 1px solid #D2B48C;
-        background-color: rgba(255, 255, 240, 0.8); /* Fundo semi-transparente para leitura */
-        border-radius: 8px;
-        color: #4B3832;
-        text-shadow: none;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-
-# --- 4. EXIBIÇÃO DA INTERFACE ---
+    # --- 4. EXIBIÇÃO DA INTERFACE ---
 
 def mostrar_tela_inicial():
     """Mostra a tela de seleção de nível."""
