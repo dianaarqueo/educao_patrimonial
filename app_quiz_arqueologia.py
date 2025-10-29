@@ -72,26 +72,7 @@ DADOS_ARQUEOLOGIA = {
     }
 }
 
-# --- 1. ESTRUTURA DE DADOS COM DICAS SIMPLIFICADAS ---
-# ... (Seu DADOS_ARQUEOLOGIA aqui) ...
-
-# Lista de todos os termos (para criar alternativas falsas)
-def extrair_todas_as_palavras(dados):
-    """Extrai todas as palavras-chave de todos os níveis, tratando o aninhamento."""
-    todas_palavras = []
-    for nivel, conteudo in dados.items():
-        if nivel == "Específicos":
-            # Caso de dicionário aninhado (Subáreas)
-            for subarea, palavras_dicas in conteudo.items():
-                todas_palavras.extend(palavras_dicas.keys())
-        else:
-            # Caso de dicionário simples (Níveis Regulares)
-            todas_palavras.extend(conteudo.keys())
-    return todas_palavras
-
-TODAS_AS_PALAVRAS = extrair_todas_as_palavras(DADOS_ARQUEOLOGIA)
-
-# --- 2. FUNÇÕES DE LÓGICA E MÚLTIPLA ESCOLHA ---
+# --- 2. FUNÇÕES DE LÓGICA E ESTADO DO JOGO ---
 
 def inicializar_estado_do_jogo():
     """Define o estado inicial ou reinicia o jogo."""
@@ -102,42 +83,74 @@ def inicializar_estado_do_jogo():
     st.session_state.total_palavras = 0
     st.session_state.mensagem_feedback = ""
     st.session_state.fase_jogo = "inicio"
-    st.session_state.pontuacao_total = 0
-    st.session_state.resposta_verificada = False  # <--- NOVO ESTADO AQUI
-
-def avancar_pergunta():
-    """Limpa o feedback, avança o índice e verifica se o nível terminou."""
+    
+    # Manter a pontuação total (só zera quando o app é reiniciado)
+    if 'pontuacao_total' not in st.session_state:
+        st.session_state.pontuacao_total = 0
+        
     st.session_state.resposta_verificada = False
-    st.session_state.mensagem_feedback = ""
-    
-    # Avança para a próxima palavra
-    st.session_state.indice_palavra += 1
-    
-    # Verifica se o nível terminou após o avanço
-    if st.session_state.indice_palavra >= st.session_state.total_palavras:
-        st.session_state.fase_jogo = "finalizado"
+    st.session_state.radio_selection = None
 
-def submeter_resposta(palavra_correta):
+def get_palavras_do_contexto(nome_nivel):
     """
-    Função de callback para o botão 'Verificar'. 
-    Usa o valor da sessão de estado e chama a verificação.
+    Retorna a lista de todas as palavras (chaves) de um nível ou subárea.
     """
-    resposta_selecionada = st.session_state.get("radio_selection")
-    
-    if not resposta_selecionada:
-        st.session_state.mensagem_feedback = "⚠️ Por favor, selecione uma alternativa antes de verificar!"
-        st.session_state.resposta_verificada = False # Mantém o botão verificar visível
-        return
+    if nome_nivel in DADOS_ARQUEOLOGIA:
+        return list(DADOS_ARQUEOLOGIA[nome_nivel].keys())
+    elif nome_nivel in DADOS_ARQUEOLOGIA["Específicos"]:
+        return list(DADOS_ARQUEOLOGIA["Específicos"][nome_nivel].keys())
+    return []
 
-    # Se a resposta foi selecionada, faça a verificação
-    st.session_state.resposta_verificada = True # Muda o estado para verificado
+def extrair_todas_as_palavras(dados):
+    """Extrai todas as palavras-chave de todos os níveis."""
+    todas_palavras = []
+    for nivel, conteudo in dados.items():
+        if nivel == "Específicos":
+            for subarea in conteudo.keys():
+                todas_palavras.extend(get_palavras_do_contexto(subarea))
+        else:
+            todas_palavras.extend(get_palavras_do_contexto(nivel))
+    return todas_palavras
+
+TODAS_AS_PALAVRAS = extrair_todas_as_palavras(DADOS_ARQUEOLOGIA)
+
+
+def gerar_alternativas(palavra_correta, nome_nivel):
+    """
+    Gera três alternativas contextuais (uma correta e duas do mesmo contexto), 
+    priorizando o contexto restrito do nível/subárea.
+    """
+    palavras_contexto = get_palavras_do_contexto(nome_nivel)
     
-    if resposta_selecionada == palavra_correta:
-        st.session_state.mensagem_feedback = f"✅ **Resposta Certa!** A palavra é: *{palavra_correta}*."
-        st.session_state.palavras_corretas += 1
-        st.session_state.pontuacao_total += 1
+    # 1. Tenta tirar palavras do contexto imediato (mesmo nível/subárea)
+    distratores_potenciais = [p for p in palavras_contexto if p != palavra_correta]
+    alternativas_falsas = []
+    
+    if len(distratores_potenciais) >= 2:
+        # Se houver palavras suficientes no contexto, usa 2 delas
+        alternativas_falsas = random.sample(distratores_potenciais, 2)
     else:
-        st.session_state.mensagem_feedback = f"❌ **Resposta Errada.** A correta era: *{palavra_correta}*."
+        # Se houver 0 ou 1, usa o que tem e busca o restante em palavras globais relevantes
+        alternativas_falsas = distratores_potenciais
+        num_faltante = 2 - len(alternativas_falsas)
+        
+        if num_faltante > 0:
+            outras_palavras_globais = [
+                p for p in TODAS_AS_PALAVRAS 
+                if p != palavra_correta and p not in alternativas_falsas
+            ]
+            
+            if len(outras_palavras_globais) >= num_faltante:
+                alternativas_falsas.extend(random.sample(outras_palavras_globais, num_faltante))
+            else:
+                # Fallback extremo para garantir 3 opções (pode ter repetição, mas mantém a estabilidade)
+                alternativas_falsas.extend(random.sample(TODAS_AS_PALAVRAS, num_faltante))
+
+    # 3. Monta a lista final e embaralha a ordem
+    alternativas = [palavra_correta] + alternativas_falsas
+    random.shuffle(alternativas)
+    return alternativas
+
 
 def carregar_nivel(nome_nivel):
     """Carrega as palavras para um nível e inicia o estado."""
@@ -160,69 +173,34 @@ def carregar_nivel(nome_nivel):
     st.session_state.palavras_embaralhadas = palavras_lista
     st.session_state.fase_jogo = "jogando"
 
-def gerar_alternativas(palavra_correta):
-    """Gera três alternativas, sendo uma a correta."""
-    # Mantenha esta função auxiliar (ela está correta)
-def get_palavras_do_contexto(nome_nivel):
-    """
-    Retorna a lista de todas as palavras (chaves) de um nível ou subárea.
-    """
-    if nome_nivel in DADOS_ARQUEOLOGIA:
-        return list(DADOS_ARQUEOLOGIA[nome_nivel].keys())
-    elif nome_nivel in DADOS_ARQUEOLOGIA["Específicos"]:
-        return list(DADOS_ARQUEOLOGIA["Específicos"][nome_nivel].keys())
-    return []
-
-# Mantenha esta lista (ela é essencial)
-TODAS_AS_PALAVRAS = extrair_todas_as_palavras(DADOS_ARQUEOLOGIA)
-
-
-# Função com a lógica refinada (substitua a sua versão anterior)
-def gerar_alternativas(palavra_correta, nome_nivel):
-    """
-    Gera três alternativas contextuais (uma correta e duas do mesmo contexto), 
-    priorizando o contexto restrito do nível/subárea.
-    """
+def avancar_pergunta():
+    """Limpa o feedback, avança o índice e verifica se o nível terminou."""
+    st.session_state.resposta_verificada = False
+    st.session_state.mensagem_feedback = ""
+    st.session_state.radio_selection = None # Limpa a seleção do rádio
     
-    palavras_contexto = get_palavras_do_contexto(nome_nivel)
+    # Avança para a próxima palavra
+    st.session_state.indice_palavra += 1
     
-    # 1. Tenta tirar palavras do contexto imediato (mesmo nível/subárea)
-    distratores_potenciais = [p for p in palavras_contexto if p != palavra_correta]
-    
-    alternativas_falsas = []
-    
-    if len(distratores_potenciais) >= 2:
-        # Se houver palavras suficientes no contexto, usa 2 delas
-        alternativas_falsas = random.sample(distratores_potenciais, 2)
-    else:
-        # Se houver 0 ou 1, usa o que tem e busca o restante em outras palavras relevantes (global)
-        alternativas_falsas = distratores_potenciais
-        
-        # 2. Preenche com palavras aleatórias mais amplas se o contexto for pequeno
-        num_faltante = 2 - len(alternativas_falsas)
-        
-        if num_faltante > 0:
-             # Palavras globais que não foram usadas e não são a resposta correta
-            outras_palavras_globais = [
-                p for p in TODAS_AS_PALAVRAS 
-                if p != palavra_correta and p not in alternativas_falsas
-            ]
-            
-            # Se a lista global tiver palavras suficientes, preenche
-            if len(outras_palavras_globais) >= num_faltante:
-                alternativas_falsas.extend(random.sample(outras_palavras_globais, num_faltante))
-            else:
-                # Caso extremo: repete uma palavra ou usa qualquer coisa se o banco for minúsculo
-                # (Garantia de que sempre haverá 3 opções)
-                alternativas_falsas.extend(random.sample(TODAS_AS_PALAVRAS, num_faltante))
+    # Verifica se o nível terminou após o avanço
+    if st.session_state.indice_palavra >= st.session_state.total_palavras:
+        st.session_state.fase_jogo = "finalizado"
 
-    # 3. Monta a lista final e embaralha a ordem
-    alternativas = [palavra_correta] + alternativas_falsas
-    random.shuffle(alternativas)
-    return alternativas
+def submeter_resposta(palavra_correta):
+    """
+    Função de callback para o botão 'Verificar'. 
+    Usa o valor da sessão de estado do rádio e chama a verificação.
+    """
+    resposta_selecionada = st.session_state.get("radio_selection")
+    
+    if not resposta_selecionada:
+        st.session_state.mensagem_feedback = "⚠️ Por favor, selecione uma alternativa antes de verificar!"
+        st.session_state.resposta_verificada = False # Mantém o botão verificar visível
+        return
 
-def verificar_resposta_quiz(resposta_selecionada, palavra_correta):
-    """Verifica a resposta do quiz, dá feedback e avança o jogo."""
+    # Se a resposta foi selecionada, faça a verificação
+    st.session_state.resposta_verificada = True # Muda o estado para verificado
+    
     if resposta_selecionada == palavra_correta:
         st.session_state.mensagem_feedback = f"✅ **Resposta Certa!** A palavra é: *{palavra_correta}*."
         st.session_state.palavras_corretas += 1
@@ -230,11 +208,6 @@ def verificar_resposta_quiz(resposta_selecionada, palavra_correta):
     else:
         st.session_state.mensagem_feedback = f"❌ **Resposta Errada.** A correta era: *{palavra_correta}*."
 
-    # Avança para a próxima palavra
-    st.session_state.indice_palavra += 1
-    
-    if st.session_state.indice_palavra >= st.session_state.total_palavras:
-        st.session_state.fase_jogo = "finalizado"
 
 # --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO) ---
 
@@ -242,22 +215,31 @@ def aplicar_tema(nivel):
     """Aplica o CSS com base no tema escolhido para os níveis específicos."""
     
     # Estilo base 'Caderno de Campo' (padrão)
-    fundo_padrao = "#F5F5DC"  # Bege/Creme
+    fundo_padrao = "#F5F5DC"  # Bege/Creme (Fundo de Papel)
     cores_texto = "#4B3832" # Marrom Escuro
+    
+    # Mapeamento de temas visuais (usando imagens de exemplo)
+    temas = {
+        "Clássica": ('url("https://i.imgur.com/8Q0v8rP.jpg")', cores_texto), # Papiro/Areia
+        "Subaquática": ('url("https://i.imgur.com/uR2N88W.jpg")', 'white', '1px 1px 2px black'), # Água/Marinho
+        "Zooarqueologia": ('url("https://i.imgur.com/jM8c3ZJ.jpg")', cores_texto), # Osso/Cinza Claro
+        "Geoarqueologia": ('url("https://i.imgur.com/6XzW8Gg.jpg")', cores_texto), # Estratos/Solo Vermelho
+    }
 
-    # Temas Específicos
-    if nivel == "Clássica":
-        fundo = 'url("https://i.imgur.com/8Q0v8rP.jpg")' # Exemplo: Fundo de Papiro/Areia
-        st.markdown(f'<style>.stApp {{background-image: {fundo}; background-size: cover; background-attachment: fixed; color: {cores_texto};}}</style>', unsafe_allow_html=True)
-    elif nivel == "Subaquática":
-        fundo = 'url("https://i.imgur.com/uR2N88W.jpg")' # Exemplo: Fundo de Água/Azul Marinho
-        st.markdown(f'<style>.stApp {{background-image: {fundo}; background-size: cover; background-attachment: fixed; color: white; text-shadow: 1px 1px 2px black;}}</style>', unsafe_allow_html=True)
-    elif nivel == "Zooarqueologia":
-        fundo = 'url("https://i.imgur.com/jM8c3ZJ.jpg")' # Exemplo: Fundo de Osso/Cinza Claro
-        st.markdown(f'<style>.stApp {{background-image: {fundo}; background-size: cover; background-attachment: fixed; color: {cores_texto};}}</style>', unsafe_allow_html=True)
-    elif nivel == "Geoarqueologia":
-        fundo = 'url("https://i.imgur.com/6XzW8Gg.jpg")' # Exemplo: Fundo de Estratos/Solo Vermelho
-        st.markdown(f'<style>.stApp {{background-image: {fundo}; background-size: cover; background-attachment: fixed; color: {cores_texto};}}</style>', unsafe_allow_html=True)
+    fundo_img, cor_texto, sombra = temas.get(nivel, (None, cores_texto, 'none'))
+    
+    if fundo_img:
+        st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: {fundo_img}; 
+            background-size: cover; 
+            background-attachment: fixed; 
+            color: {cor_texto}; 
+            text-shadow: {sombra};
+        }}
+        </style>
+        """, unsafe_allow_html=True)
     else:
         # Níveis Padrão (Fácil, Médio, Difícil)
         st.markdown(f'<style>.stApp {{background-color: {fundo_padrao}; color: {cores_texto};}}</style>', unsafe_allow_html=True)
@@ -267,7 +249,7 @@ def aplicar_tema(nivel):
     st.markdown("""
     <style>
     h1, h2, h3 {
-        color: #4B3832; /* Marrom Escuro */
+        color: inherit; /* Herda cor do tema */
         border-bottom: 2px solid #D2B48C;
         padding-bottom: 5px;
     }
@@ -286,6 +268,8 @@ def aplicar_tema(nivel):
         border: 1px solid #D2B48C;
         background-color: rgba(255, 255, 240, 0.8); /* Fundo semi-transparente para leitura */
         border-radius: 8px;
+        color: #4B3832;
+        text-shadow: none;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -295,7 +279,7 @@ def aplicar_tema(nivel):
 
 def mostrar_tela_inicial():
     """Mostra a tela de seleção de nível."""
-    st.title("🗺️ Mistério Arqueológico")
+    st.title("🗺️ Arqueologia em Camadas: O Quiz")
     st.header("Selecione o seu Nível de Descoberta")
     
     # Níveis Regulares
@@ -305,7 +289,7 @@ def mostrar_tela_inicial():
     with col2:
         st.button("Nível 2: MÉDIO (Técnicas de Campo)", on_click=carregar_nivel, args=("Médio",), use_container_width=True)
     with col3:
-        st.button("Nível 3: DIFÍCIL (Teoria)", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
+        st.button("Nível 3: DIFÍCIL (Teoria Avançada)", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
 
     # Níveis Específicos
     st.subheader("Nível 4: ESPECÍFICOS (Subáreas)")
@@ -319,10 +303,6 @@ def mostrar_tela_inicial():
     with col_sub4:
         st.button("Geoarqueologia", on_click=carregar_nivel, args=("Geoarqueologia",), help="Solos, Sedimentos, Geologia.", use_container_width=True)
 
-    st.sidebar.info(f"**Pontuação Total Acumulada:** {st.session_state.pontuacao_total}")
-    st.sidebar.markdown("---")
-    st.sidebar.caption("O jogo utiliza a 'sessão de estado' do Streamlit. Clique em 'Voltar para Seleção' ou 'Começar Novo Jogo' para zerar.")
-
 
 def mostrar_tela_jogo():
     """Mostra a interface do quiz de múltipla escolha."""
@@ -332,7 +312,7 @@ def mostrar_tela_jogo():
         st.success(f"🥳 Nível '{st.session_state.nivel_atual}' COMPLETO!")
         st.balloons()
         st.write(f"Você acertou **{st.session_state.palavras_corretas}** de **{st.session_state.total_palavras}** palavras neste nível.")
-        st.button("Voltar para Seleção de Nível", on_click=mostrar_tela_inicial)
+        st.button("Voltar para Seleção de Nível", on_click=inicializar_estado_do_jogo)
         return
 
     # Exibe o jogo em andamento
@@ -342,7 +322,7 @@ def mostrar_tela_jogo():
     palavra_correta, dica_atual = st.session_state.palavras_embaralhadas[indice]
     
     # Gera as alternativas para a palavra atual
-    alternativas = gerar_alternativas(palavra_correta)
+    alternativas = gerar_alternativas(palavra_correta, st.session_state.nivel_atual)
     
     st.header(f"🗃️ Nível: {st.session_state.nivel_atual}")
     st.markdown(f"**Palavra {indice + 1}** de {st.session_state.total_palavras}")
@@ -354,14 +334,14 @@ def mostrar_tela_jogo():
     
     st.subheader("Escolha a palavra correta:")
 
-   # O Formulario agora é usado principalmente para controlar o botão e manter a UI limpa
+    # Formulário para a Múltipla Escolha
     with st.form(key=f"form_quiz_{indice}"):
         
-        # O st.radio agora usa uma chave fixa e armazena a seleção diretamente
-        resposta_selecionada = st.radio(
+        # O st.radio armazena a seleção em st.session_state.radio_selection
+        st.radio(
             "Alternativas:",
             alternativas,
-            key="radio_selection", # <--- CHAVE FIXA PARA PERSISTIR A SELEÇÃO
+            key="radio_selection", # CHAVE FIXA para o callback ler o valor
             disabled=st.session_state.resposta_verificada,
             index=None
         )
@@ -371,18 +351,18 @@ def mostrar_tela_jogo():
         
         with col_btn1:
             if not st.session_state.resposta_verificada:
-                # Botão 'Verificar' - Usa o callback para submeter a resposta do st.radio
-                submit_button = st.form_submit_button(
+                # Botão 'Verificar' - Usa o callback para submeter a resposta
+                st.form_submit_button(
                     label='Escavar e Verificar', 
-                    on_click=submeter_resposta, # <--- CHAMA A NOVA FUNÇÃO DE CALLBACK
+                    on_click=submeter_resposta, 
                     args=(palavra_correta,)
                 )
             else:
                 # Botão 'Próxima Pergunta' - Visível após responder
-                # Este botão, se clicado, avança o índice
-                if st.form_submit_button(label='Próxima Pergunta >>'):
-                    avancar_pergunta()
-                    # Não precisa de st.rerun() dentro do form_submit_button com on_click
+                st.form_submit_button(
+                    label='Próxima Pergunta >>', 
+                    on_click=avancar_pergunta
+                )
                 
     # Feedback da última tentativa (Exibido após verificar)
     if st.session_state.mensagem_feedback:
@@ -391,13 +371,8 @@ def mostrar_tela_jogo():
         elif "Errada" in st.session_state.mensagem_feedback:
             st.error(st.session_state.mensagem_feedback)
         else:
-             st.warning(st.session_state.mensagem_feedback) # Mensagem de aviso (Ex: "Selecione uma alternativa")
+             st.warning(st.session_state.mensagem_feedback) 
             
-   # Certifica-se de que a seleção do rádio é limpa para a próxima pergunta
-    if st.session_state.resposta_verificada and st.session_state.get("radio_selection") is not None:
-         st.session_state.radio_selection = None
-         st.rerun() # Dispara rerun para limpar o rádio e avançar a UI
-         
     st.button("Mudar Nível", on_click=inicializar_estado_do_jogo)
 
 
@@ -418,10 +393,9 @@ def main():
         mostrar_tela_jogo()
         
     st.sidebar.header("Status")
-    st.sidebar.markdown(f"**Total de Acertos:** {st.session_state.pontuacao_total}")
-    if st.session_state.nivel_atual:
+    st.sidebar.markdown(f"**Total de Acertos Acumulados:** {st.session_state.pontuacao_total}")
+    if st.session_state.nivel_atual and st.session_state.fase_jogo != "inicio":
          st.sidebar.markdown(f"**Progresso no Nível {st.session_state.nivel_atual}:** {st.session_state.palavras_corretas}/{st.session_state.total_palavras}")
-
 
 if __name__ == "__main__":
     main()
