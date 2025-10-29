@@ -117,8 +117,19 @@ def avancar_pergunta():
     if st.session_state.indice_palavra >= st.session_state.total_palavras:
         st.session_state.fase_jogo = "finalizado"
 
-def verificar_resposta_quiz(resposta_selecionada, palavra_correta):
-    """Verifica a resposta, dá feedback e muda o estado para verificado."""
+def submeter_resposta(palavra_correta):
+    """
+    Função de callback para o botão 'Verificar'. 
+    Usa o valor da sessão de estado e chama a verificação.
+    """
+    resposta_selecionada = st.session_state.get("radio_selection")
+    
+    if not resposta_selecionada:
+        st.session_state.mensagem_feedback = "⚠️ Por favor, selecione uma alternativa antes de verificar!"
+        st.session_state.resposta_verificada = False # Mantém o botão verificar visível
+        return
+
+    # Se a resposta foi selecionada, faça a verificação
     st.session_state.resposta_verificada = True # Muda o estado para verificado
     
     if resposta_selecionada == palavra_correta:
@@ -295,15 +306,15 @@ def mostrar_tela_jogo():
     
     st.subheader("Escolha a palavra correta:")
 
-    # Formulário para a Múltipla Escolha
+   # O Formulario agora é usado principalmente para controlar o botão e manter a UI limpa
     with st.form(key=f"form_quiz_{indice}"):
         
-        # O radio button armazena a resposta na sessão de estado
+        # O st.radio agora usa uma chave fixa e armazena a seleção diretamente
         resposta_selecionada = st.radio(
             "Alternativas:",
             alternativas,
-            key=f"radio_{indice}",
-            disabled=st.session_state.resposta_verificada, # Desabilita após verificar
+            key="radio_selection", # <--- CHAVE FIXA PARA PERSISTIR A SELEÇÃO
+            disabled=st.session_state.resposta_verificada,
             index=None
         )
         
@@ -312,32 +323,33 @@ def mostrar_tela_jogo():
         
         with col_btn1:
             if not st.session_state.resposta_verificada:
-                # Botão 'Verificar' - Visível antes de responder
-                submit_button = st.form_submit_button(label='Escavar e Verificar')
-                
-                if submit_button:
-                    if resposta_selecionada:
-                        # Chama a função de verificação e atualiza o estado de feedback
-                        verificar_resposta_quiz(resposta_selecionada, palavra_correta)
-                        # O Streamlit irá rodar novamente, exibindo o feedback e o botão 'Próxima'
-                        st.rerun() 
-                    else:
-                        st.warning("Por favor, selecione uma alternativa antes de verificar!")
+                # Botão 'Verificar' - Usa o callback para submeter a resposta do st.radio
+                submit_button = st.form_submit_button(
+                    label='Escavar e Verificar', 
+                    on_click=submeter_resposta, # <--- CHAMA A NOVA FUNÇÃO DE CALLBACK
+                    args=(palavra_correta,)
+                )
             else:
                 # Botão 'Próxima Pergunta' - Visível após responder
-                # Este botão não precisa estar dentro do st.form para avançar o estado.
-                # No entanto, vamos mantê-lo aqui para organização visual.
+                # Este botão, se clicado, avança o índice
                 if st.form_submit_button(label='Próxima Pergunta >>'):
                     avancar_pergunta()
-                    st.rerun()
+                    # Não precisa de st.rerun() dentro do form_submit_button com on_click
                 
     # Feedback da última tentativa (Exibido após verificar)
     if st.session_state.mensagem_feedback:
         if "Certa" in st.session_state.mensagem_feedback:
             st.success(st.session_state.mensagem_feedback)
-        else:
+        elif "Errada" in st.session_state.mensagem_feedback:
             st.error(st.session_state.mensagem_feedback)
+        else:
+             st.warning(st.session_state.mensagem_feedback) # Mensagem de aviso (Ex: "Selecione uma alternativa")
             
+   # Certifica-se de que a seleção do rádio é limpa para a próxima pergunta
+    if st.session_state.resposta_verificada and st.session_state.get("radio_selection") is not None:
+         st.session_state.radio_selection = None
+         st.rerun() # Dispara rerun para limpar o rádio e avançar a UI
+         
     st.button("Mudar Nível", on_click=inicializar_estado_do_jogo)
 
 
