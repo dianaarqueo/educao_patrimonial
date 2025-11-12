@@ -226,11 +226,10 @@ def aplicar_tema(nivel):
             'sombra_texto': 'none',
             'emoji': "🏺🏛️"
         },
-        # Subaquática: Oceano Profundo. Alto contraste com sombra branca.
-        "Subaquática": {
+       "Subaquática": {
             'estilo_fundo': 'background: linear-gradient(to bottom, #001f3f, #003366);', 
-            'cor_texto': '#ADD8E6', # Azul Claro
-            'sombra_texto': '1px 1px 2px #000000', # Sombra escura para contraste máximo
+            'cor_texto': '#FFFFFF', # AGORA É BRANCO PURO
+            'sombra_texto': '1px 1px 2px #000000', # Sombra preta para destacar
             'emoji': "🌊⚓"
         },
         # Zooarqueologia: Ossos e Natureza.
@@ -240,11 +239,10 @@ def aplicar_tema(nivel):
             'sombra_texto': 'none',
             'emoji': "🦴🌿"
         },
-        # Geoarqueologia: Estratos de Solo e Rochas.
         "Geoarqueologia": {
             'estilo_fundo': 'background: linear-gradient(to bottom, #A0522D, #696969);', 
-            'cor_texto': '#FFDAB9', # Pêssego Claro
-            'sombra_texto': '1px 1px 2px #000000', # Sombra escura
+            'cor_texto': '#FFFFFF', # AGORA É BRANCO PURO
+            'sombra_texto': '1px 1px 2px #000000', # Sombra preta para destacar
             'emoji': "⛰️🪨"
         }
     }
