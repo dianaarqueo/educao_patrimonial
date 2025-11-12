@@ -304,8 +304,8 @@ def aplicar_tema(nivel):
         text-shadow: none;
     }}
     
-    /* 5. Radio Buttons (Garante que o texto da opção seja legível) */
-    .stRadio div[data-baseweb="radio"] label span {{
+    /* 5. Radio Buttons (FORÇA a cor do texto das alternativas) */
+    .stRadio label > div:nth-child(2) > div {{
         color: {cor_primaria} !important;
         text-shadow: {sombra_texto};
     }}
