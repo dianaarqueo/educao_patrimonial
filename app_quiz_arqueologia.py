@@ -275,7 +275,7 @@ def aplicar_tema(nivel):
     st.markdown(f"""
     <style>
     /* 1. Cores de Texto e Títulos (Aplicado à Div Principal) */
-    .stApp, .stButton, .stProgress, .stRadio, .stForm, .stSidebar {{
+   .stApp, .stButton, .stProgress, .stRadio, .stForm, .stSidebar, .stAlert {{
         color: {cor_primaria} !important;
         text-shadow: {sombra_texto};
     }}
