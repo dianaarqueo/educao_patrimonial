@@ -139,50 +139,111 @@ def verificar_resposta(resposta_usuario):
     if st.session_state.indice_palavra >= st.session_state.total_palavras:
         st.session_state.fase_jogo = "finalizado"
 
-# --- 3. COMPONENTES DE DESIGN E INTERFACE (Streamlit) ---
+# --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO REFINADO) ---
 
-# Aplicando o estilo 'Caderno de Campo e Papiros' via CSS Customizado
-st.markdown("""
-<style>
-/* Estilo Caderno de Campo e Papiros */
-.stApp {
-    background-color: #F5F5DC; /* Bege/Creme (Fundo de Papel) */
-    color: #704214; /* Marrom Sépia */
-    font-family: serif;
-}
+def aplicar_tema(nivel):
+    """Aplica o CSS com alto contraste, cores temáticas e decoração para cada subárea."""
+    
+    FUNDO_PADRAO = "#F5F5DC"  # Bege claro (papel de campo)
+    TEXTO_PADRAO = "#4B3832" # Marrom escuro
+    
+    # Mapeamento de estilos temáticos
+    temas = {
+        # Clássica: Papiro e Hieróglifos.
+        "Clássica": {
+            'estilo_fundo': 'background-color: #F8F4E3;', 
+            'cor_texto': '#8B4513', # Marrom Sépia
+            'sombra_texto': 'none',
+            'emoji': "🏺🏛️"
+        },
+        # Subaquática: Oceano Profundo. Alto contraste com sombra branca.
+        "Subaquática": {
+            'estilo_fundo': 'background: linear-gradient(to bottom, #001f3f, #003366);', 
+            'cor_texto': '#ADD8E6', # Azul Claro
+            'sombra_texto': '1px 1px 2px #000000', # Sombra escura para contraste máximo
+            'emoji': "🌊⚓"
+        },
+        # Zooarqueologia: Ossos e Natureza.
+        "Zooarqueologia": {
+            'estilo_fundo': 'background-color: #F0F0F0;', 
+            'cor_texto': '#36454F', # Cinza Ardósia
+            'sombra_texto': 'none',
+            'emoji': "🦴🌿"
+        },
+        # Geoarqueologia: Estratos de Solo e Rochas.
+        "Geoarqueologia": {
+            'estilo_fundo': 'background: linear-gradient(to bottom, #A0522D, #696969);', 
+            'cor_texto': '#FFDAB9', # Pêssego Claro
+            'sombra_texto': '1px 1px 2px #000000', # Sombra escura
+            'emoji': "⛰️🪨"
+        }
+    }
 
-h1, h2, h3 {
-    color: #4B3832; /* Marrom Escuro */
-    font-family: 'Times New Roman', serif;
-    border-bottom: 2px solid #D2B48C; /* Borda cor de areia */
-    padding-bottom: 5px;
-}
-
-.stButton>button {
-    background-color: #6B8E23; /* Verde Musgo */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    margin: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    font-weight: bold;
-    transition: all 0.2s;
-}
-
-.stButton>button:hover {
-    background-color: #8FBC8F; /* Verde Claro no hover */
-}
-
-/* Estilo para a área de dica/feedback */
-.stMarkdown p {
-    font-size: 1.1em;
-    padding: 10px;
-    border: 1px dashed #D2B48C;
-    background-color: #FFF8DC; /* Amarelo Pálido para destaque */
-}
-</style>
-""", unsafe_allow_html=True)
+    # Seleciona o tema ou usa o padrão
+    tema_config = temas.get(nivel, {
+        'estilo_fundo': f'background-color: {FUNDO_PADRAO};',
+        'cor_texto': TEXTO_PADRAO,
+        'sombra_texto': 'none',
+        'emoji': "🔎"
+    })
+    
+    estilo_aplicar = tema_config['estilo_fundo'] + f'color: {tema_config["cor_texto"]};'
+    cor_primaria = tema_config['cor_texto']
+    sombra_texto = tema_config['sombra_texto']
+    
+    # 2. INJEÇÃO DE CSS
+    
+    st.markdown(
+        f'<style>.stApp {{ {estilo_aplicar} }}</style>', 
+        unsafe_allow_html=True
+    )
+    
+    # Adiciona decoração ao título (se estiver no jogo)
+    if st.session_state.nivel_atual and st.session_state.fase_jogo != "inicio":
+        emoji = tema_config['emoji']
+        st.sidebar.markdown(f"### {emoji} **Nível: {st.session_state.nivel_atual}**")
+        
+    # 3. CSS PARA GARANTIR LEGIBILIDADE DOS COMPONENTES
+    st.markdown(f"""
+    <style>
+    /* 1. Cores de Texto e Títulos (Aplicado à Div Principal) */
+    .stApp, .stButton, .stProgress, .stRadio, .stForm, .stSidebar {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+    }}
+    
+    /* 2. Títulos */
+    h1, h2, h3 {{
+        color: {cor_primaria} !important; 
+        border-bottom: 2px solid #D2B48C;
+        padding-bottom: 5px;
+        text-shadow: {sombra_texto};
+    }}
+    
+    /* 3. Área de Dica (Mantida clara para alto contraste) */
+    .stMarkdown p {{
+        background-color: rgba(255, 255, 240, 0.95) !important; /* Quase branco sólido */
+        color: #4B3832 !important; /* Texto escuro dentro da caixa de dica */
+        border: 1px solid {cor_primaria};
+        text-shadow: none;
+    }}
+    
+    /* 4. Botões (mantidos verdes para destaque) */
+    .stButton>button {{
+        background-color: #6B8E23; 
+        color: white;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+        text-shadow: none;
+    }}
+    
+    /* 5. Radio Buttons (Garante que o texto da opção seja legível) */
+    .stRadio div[data-baseweb="radio"] label span {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+    }}
+    
+    </style>
+    """, unsafe_allow_html=True)
 
 
 def mostrar_tela_inicial():
