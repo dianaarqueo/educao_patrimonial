@@ -296,7 +296,7 @@ def aplicar_tema(nivel):
         text-shadow: none;
     }}
     
-    /* 4. Botões (mantidos verdes para destaque) */
+   /* 4. Botões (mantidos verdes para destaque) */
     .stButton>button {{
         background-color: #6B8E23; 
         color: white;
