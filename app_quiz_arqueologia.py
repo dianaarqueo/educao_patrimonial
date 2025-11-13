@@ -349,9 +349,16 @@ def aplicar_tema(nivel):
         color: #4B3832; /* Texto escuro para alto contraste na caixa de dica */
         text-shadow: none;
     }}
-    /* Cores das Alternativas de Rádio (Garante que o texto do rádio seja legível contra o fundo) */
-    .stRadio label > div:first-child {{
-        color: {cor_primaria};
+    /* Cores das Alternativas de Rádio - Forçar cor do texto das opções */
+    .stRadio > div > div > div > label > div {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+    }}
+    /* Alternativa mais específica para o texto das opções do radio */
+    .stRadio label > div:last-child > div {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+        font-weight: 500;
     }}
     </style>
     """, unsafe_allow_html=True)
