@@ -403,22 +403,35 @@ def mostrar_tela_inicial():
         st.info("Nenhum registro de pontuação ainda. Seja o primeiro a jogar!")
 
 
-# Dentro de mostrar_tela_jogo:
+def mostrar_tela_jogo():
+    """Mostra a interface do quiz de múltipla escolha."""
+    
+    indice = st.session_state.indice_palavra
+    
+    # Verifica se há perguntas para exibir
+    if indice >= st.session_state.total_palavras_do_nivel:
+        # 1. TRATAMENTO DE FIM DE NÍVEL
+        
+        # Salva a pontuação (se for o último nível jogado)
+        if st.session_state.pontuacao_total > 0 and st.session_state.get('nome_jogador'):
+             st.session_state.ranking_atualizado = salvar_ranking(
+                 st.session_state.nome_jogador, 
+                 st.session_state.pontuacao_total
+             )
+        
+        # Exibe a mensagem de finalização
+        st.success(f"🥳 Fim da Escavação, **{st.session_state.nome_jogador}**!")
+        st.balloons()
+        st.markdown(f"Você completou a escavação com **{st.session_state.palavras_corretas}** acertos neste nível e **{st.session_state.pontuacao_total}** acertos totais.")
+        st.markdown("Clique abaixo para ver o **Ranking** e escolher um novo nível.")
+        
+        # O botão reinicia o estado de jogo para "inicio" e salva a pontuação
+        st.button("Voltar para Seleção de Nível", on_click=inicializar_estado_do_jogo)
+        
+        # É ESSENCIAL RETORNAR AQUI para parar a execução da função
+        return 
+    
 
-# NOVO TRATAMENTO DE FIM DE NÍVEL (Se todas as palavras do nível atual acabaram)
-if indice >= st.session_state.total_palavras_do_nivel: 
-    # MUDANÇA: Se o índice atingir o total de palavras do nível, zera o índice
-    # e exibe a mensagem de fim de jogo/nível.
-    st.session_state.indice_palavra = 0 # Zera para evitar problemas se o usuário tentar avançar
-    st.session_state.total_palavras = 0 # Zera total de palavras acumulado
-    st.session_state.fase_jogo = "finalizado_nivel" # Novo estado para sinalizar fim de nível
-
-# Se o novo estado for detectado:
-if st.session_state.fase_jogo == "finalizado_nivel":
-    st.success(f"🎉 Nível '{st.session_state.nivel_atual}' concluído!")
-    st.markdown(f"Você pode escolher um novo nível. Sua pontuação acumulada é: **{st.session_state.pontuacao_total}**.")
-    st.button("Escolher Novo Nível", on_click=lambda: st.session_state.update(fase_jogo="inicio"))
-    return
 
 # Na exibição da pergunta em andamento (abaixo):
 # ...
