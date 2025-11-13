@@ -1,35 +1,7 @@
 import streamlit as st
 import random
-import pandas as pd
-import os # Importação necessária para lidar com o arquivo
+import os
 
-# --- 0. CONFIGURAÇÃO DE ARQUIVO DO RANKING ---
-RANKING_FILE = 'ranking_arqueologia.csv'
-
-def carregar_ranking():
-    """Carrega o ranking do CSV ou cria um DataFrame vazio se o arquivo não existir."""
-    if os.path.exists(RANKING_FILE):
-        df = pd.read_csv(RANKING_FILE)
-        # Garante que a coluna 'Pontuação' seja numérica e ordena
-        df['Pontuação'] = pd.to_numeric(df['Pontuação'], errors='coerce')
-        return df.sort_values(by='Pontuação', ascending=False).reset_index(drop=True)
-    else:
-        return pd.DataFrame(columns=['Nome', 'Pontuação'])
-
-def salvar_ranking(nome, pontuacao):
-    """Adiciona a nova pontuação ao ranking e salva no CSV."""
-    df = carregar_ranking()
-    novo_registro = pd.DataFrame([{'Nome': nome, 'Pontuação': pontuacao}])
-    
-    # Concatena o novo registro, ordena e pega o top 10 (opcional)
-    df_atualizado = pd.concat([df, novo_registro], ignore_index=True)
-    df_atualizado = df_atualizado.sort_values(by='Pontuação', ascending=False)
-    
-    # Limita ao Top 10 para não sobrecarregar
-    df_atualizado = df_atualizado.head(10) 
-    
-    df_atualizado.to_csv(RANKING_FILE, index=False)
-    return df_atualizado.reset_index(drop=True)
 
 # --- 1. ESTRUTURA DE DADOS COM DICAS SIMPLIFICADAS ---
 DADOS_ARQUEOLOGIA = {
@@ -103,35 +75,19 @@ DADOS_ARQUEOLOGIA = {
 # --- 2. FUNÇÕES DE LÓGICA E ESTADO DO JOGO ---
 
 def inicializar_estado_do_jogo():
-    """Define o estado inicial ou reinicia o jogo."""
-    
-    # Salva a pontuação se estiver voltando do jogo para o menu (e se houve acertos)
-    if 'fase_jogo' in st.session_state and st.session_state.fase_jogo == "jogando":
-        if st.session_state.pontuacao_total > 0 and st.session_state.get('nome_jogador'):
-             st.session_state.ranking_atualizado = salvar_ranking(
-                 st.session_state.nome_jogador, 
-                 st.session_state.pontuacao_total
-             )
-        
+    """Define o estado inicial ou reinicia o jogo, limpando pontuações e estado."""
     st.session_state.nivel_atual = None
     st.session_state.indice_palavra = 0
     st.session_state.palavras_embaralhadas = []
     st.session_state.palavras_corretas = 0
-    st.session_state.total_palavras = 0
+    st.session_state.total_palavras_do_nivel = 0 # Novo total para a barra de progresso
+    st.session_state.pontuacao_total = 0 # Pontuação total limpa
     st.session_state.mensagem_feedback = ""
     st.session_state.fase_jogo = "inicio"
-    
-    # Zera a pontuação total APENAS quando volta para o menu principal
-    st.session_state.pontuacao_total = 0
-        
     st.session_state.resposta_verificada = False
     st.session_state.radio_selection = None
-    
-    # Inicializa ou carrega o ranking
-    if 'ranking_atualizado' not in st.session_state:
-        st.session_state.ranking_atualizado = carregar_ranking()
+    st.session_state.nome_jogador = "Arqueólogo(a) Anônimo(a)" # Valor default
 
-# Funções auxiliares de palavras e alternativas (mantidas)
 def get_palavras_do_contexto(nome_nivel):
     """Retorna a lista de todas as palavras (chaves) de um nível ou subárea."""
     if nome_nivel in DADOS_ARQUEOLOGIA:
@@ -189,7 +145,7 @@ def carregar_nivel(nome_nivel):
     # 1. ZERA O ESTADO DO QUIZ ATUAL (Variáveis que controlam a pergunta)
     st.session_state.nivel_atual = nome_nivel
     st.session_state.indice_palavra = 0 # Zera o índice
-    st.session_state.palavras_corretas = 0 # Zera acertos do nível atual (se precisar usar)
+    st.session_state.palavras_corretas = 0 # Zera acertos do nível atual
     st.session_state.mensagem_feedback = ""
     st.session_state.resposta_verificada = False
     st.session_state.radio_selection = None
@@ -204,8 +160,7 @@ def carregar_nivel(nome_nivel):
         return
 
     # 3. ATUALIZA O TOTAL E EMBARALHA
-    # A lista de palavras DEVE ser substituída pelas novas do nível, não estendida.
-    st.session_state.total_palavras_do_nivel = len(palavras_dicas) # Novo total para a barra de progresso
+    st.session_state.total_palavras_do_nivel = len(palavras_dicas) # Total de palavras do nível
     palavras_lista = list(palavras_dicas.items())
     random.shuffle(palavras_lista)
     st.session_state.palavras_embaralhadas = palavras_lista # Substitui a lista
@@ -220,16 +175,10 @@ def avancar_pergunta():
     
     # Avança para a próxima palavra
     st.session_state.indice_palavra += 1
-    
-    # Nota: A lógica de 'finalizado' agora é tratada implicitamente ao voltar para a tela inicial
-    # Se todos os níveis fossem sequenciais, a lógica estaria aqui.
-    # Como os níveis são escolhidos, o jogo só termina quando o usuário clica em "Mudar Nível".
 
 def submeter_resposta(palavra_correta):
-    """
-    Função de callback para o botão 'Verificar'. 
-    Usa o valor da sessão de estado do rádio e chama a verificação.
-    """
+    """Verifica a resposta e atualiza o estado de feedback e a pontuação."""
+    
     resposta_selecionada = st.session_state.get("radio_selection")
     
     if not resposta_selecionada:
@@ -242,12 +191,12 @@ def submeter_resposta(palavra_correta):
     if resposta_selecionada == palavra_correta:
         st.session_state.mensagem_feedback = f"✅ **Resposta Certa!** A palavra é: *{palavra_correta}*."
         st.session_state.palavras_corretas += 1
-        st.session_state.pontuacao_total += 1 # Pontuação acumulada
+        st.session_state.pontuacao_total += 1 # Pontuação total acumulada
     else:
         st.session_state.mensagem_feedback = f"❌ **Resposta Errada.** A correta era: *{palavra_correta}*."
 
 
-# --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO REFINADO) ---
+# --- 3. CONFIGURAÇÃO DE DESIGN (CSS TEMÁTICO) ---
 
 def aplicar_tema(nivel):
     """Aplica o CSS com alto contraste, cores temáticas e decoração para cada subárea."""
@@ -265,7 +214,7 @@ def aplicar_tema(nivel):
         },
         "Subaquática": {
             'estilo_fundo': 'background: linear-gradient(to bottom, #001f3f, #003366);', 
-            'cor_texto': '#FFFFFF', # Branco Puro
+            'cor_texto': '#FFFFFF',
             'sombra_texto': '1px 1px 2px #000000',
             'emoji': "🌊⚓"
         },
@@ -277,7 +226,7 @@ def aplicar_tema(nivel):
         },
         "Geoarqueologia": {
             'estilo_fundo': 'background: linear-gradient(to bottom, #A0522D, #696969);', 
-            'cor_texto': '#FFFFFF', # Branco Puro
+            'cor_texto': '#FFFFFF',
             'sombra_texto': '1px 1px 2px #000000',
             'emoji': "⛰️🪨"
         }
@@ -332,16 +281,10 @@ def aplicar_tema(nivel):
         text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
     }}
     /* 4. Radio Buttons (Contraste reforçado nas alternativas) */
-      /* Cores das Alternativas de Rádio - Forçar cor do texto das opções */
-    .stRadio > div > div > div > label > div {{
+    .stRadio label > div:nth-child(2) > div {{
         color: {cor_primaria} !important;
         text-shadow: {sombra_texto};
     }}
-    /* Alternativa mais específica para o texto das opções do radio */
-    .stRadio label > div:last-child > div {{
-        color: {cor_primaria} !important;
-        text-shadow: {sombra_texto};
-        font-weight: 500;
     </style>
     """, unsafe_allow_html=True)
 
@@ -349,119 +292,59 @@ def aplicar_tema(nivel):
 # --- 4. EXIBIÇÃO DA INTERFACE ---
 
 def mostrar_tela_inicial():
-    """Mostra a tela de seleção de nível e o ranking."""
+    """Mostra a tela de seleção de nível."""
     
-    st.title("🗺️ Mistério Arqueológico: O Quiz")
+    st.title("🗺️ Arqueologia em Camadas: O Quiz")
+    st.header("Selecione o seu Nível de Descoberta")
     
-    # --- NOVIDADE: CAMPO DE NOME DO JOGADOR ---
-    st.header("1. Identificação do Arqueólogo")
-    
-    # Campo de texto para o nome
-    st.text_input(
-        "Insira seu nome/apelido de campo:", 
-        key="nome_jogador", 
-        placeholder="Ex: Indiana Jones"
-    )
+    # Níveis Regulares
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.button("Nível 1: FÁCIL (Fundamentos)", on_click=carregar_nivel, args=("Fácil",), use_container_width=True)
+    with col2:
+        st.button("Nível 2: MÉDIO (Técnicas de Campo)", on_click=carregar_nivel, args=("Médio",), use_container_width=True)
+    with col3:
+        st.button("Nível 3: DIFÍCIL (Teoria Avançada)", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
 
-    # Verifica se o nome foi inserido antes de mostrar os níveis
-    if st.session_state.get('nome_jogador') and st.session_state.nome_jogador.strip() != "":
-        st.success(f"Arqueólogo(a) **{st.session_state.nome_jogador}**, sua escavação pode começar!")
-
-        st.header("2. Selecione o seu Nível de Descoberta")
+    # Níveis Específicos
+    st.subheader("Nível 4: ESPECÍFICOS (Subáreas)")
+    col_sub1, col_sub2, col_sub3, col_sub4 = st.columns(4)
+    with col_sub1:
+        st.button("Clássica", on_click=carregar_nivel, args=("Clássica",), help="Egiptologia, Roma, Grécia.", use_container_width=True)
+    with col_sub2:
+        st.button("Subaquática", on_click=carregar_nivel, args=("Subaquática",), help="Naufrágios, Marítima.", use_container_width=True)
+    with col_sub3:
+        st.button("Zooarqueologia", on_click=carregar_nivel, args=("Zooarqueologia",), help="Ossos, Dieta, Fauna.", use_container_width=True)
+    with col_sub4:
+        st.button("Geoarqueologia", on_click=carregar_nivel, args=("Geoarqueologia",), help="Solos, Sedimentos, Geologia.", use_container_width=True)
         
-        # Níveis Regulares
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.button("Nível 1: FÁCIL", on_click=carregar_nivel, args=("Fácil",), use_container_width=True)
-        with col2:
-            st.button("Nível 2: MÉDIO", on_click=carregar_nivel, args=("Médio",), use_container_width=True)
-        with col3:
-            st.button("Nível 3: DIFÍCIL", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
-
-        # Níveis Específicos
-        st.subheader("Nível 4: ESPECÍFICOS (Subáreas)")
-        col_sub1, col_sub2, col_sub3, col_sub4 = st.columns(4)
-        with col_sub1:
-            st.button("Clássica", on_click=carregar_nivel, args=("Clássica",), use_container_width=True)
-        with col_sub2:
-            st.button("Subaquática", on_click=carregar_nivel, args=("Subaquática",), use_container_width=True)
-        with col_sub3:
-            st.button("Zooarqueologia", on_click=carregar_nivel, args=("Zooarqueologia",), use_container_width=True)
-        with col_sub4:
-            st.button("Geoarqueologia", on_click=carregar_nivel, args=("Geoarqueologia",), use_container_width=True)
-
-    else:
-        st.info("Por favor, insira seu nome para iniciar o jogo.")
-
-    # --- NOVIDADE: EXIBIÇÃO DO RANKING ---
-    st.markdown("---")
-    st.header("🏆 Ranking dos Melhores Arqueólogos")
-    df_ranking = carregar_ranking()
-    
-    if not df_ranking.empty:
-        # Renomeia as colunas para exibição amigável
-        df_display = df_ranking.rename(columns={'Nome': 'Nome', 'Pontuação': 'Acertos'})
-        # Adiciona a coluna de Posição
-        df_display.index = df_display.index + 1
-        df_display.index.name = 'Posição'
-        st.table(df_display)
-    else:
-        st.info("Nenhum registro de pontuação ainda. Seja o primeiro a jogar!")
-
 
 def mostrar_tela_jogo():
     """Mostra a interface do quiz de múltipla escolha."""
     
     indice = st.session_state.indice_palavra
     
-    # Verifica se há perguntas para exibir
+    # 1. TRATAMENTO DE FIM DE NÍVEL
     if indice >= st.session_state.total_palavras_do_nivel:
-        # 1. TRATAMENTO DE FIM DE NÍVEL
         
-        # Salva a pontuação (se for o último nível jogado)
-        if st.session_state.pontuacao_total > 0 and st.session_state.get('nome_jogador'):
-             st.session_state.ranking_atualizado = salvar_ranking(
-                 st.session_state.nome_jogador, 
-                 st.session_state.pontuacao_total
-             )
-        
-        # Exibe a mensagem de finalização
-        st.success(f"🥳 Fim da Escavação, **{st.session_state.nome_jogador}**!")
+        st.success(f"🥳 Nível '{st.session_state.nivel_atual}' CONCLUÍDO!")
         st.balloons()
-        st.markdown(f"Você completou a escavação com **{st.session_state.palavras_corretas}** acertos neste nível e **{st.session_state.pontuacao_total}** acertos totais.")
-        st.markdown("Clique abaixo para ver o **Ranking** e escolher um novo nível.")
+        st.markdown(f"Você acertou **{st.session_state.palavras_corretas}** de **{st.session_state.total_palavras_do_nivel}** perguntas neste nível.")
+        st.markdown("Clique abaixo para escolher o próximo desafio!")
         
-        # O botão reinicia o estado de jogo para "inicio" e salva a pontuação
+        # O botão reinicia o estado de jogo para "inicio"
         st.button("Voltar para Seleção de Nível", on_click=inicializar_estado_do_jogo)
         
-        # É ESSENCIAL RETORNAR AQUI para parar a execução da função
         return 
     
-
-
-# Na exibição da pergunta em andamento (abaixo):
-# ...
-# Progresso
-st.markdown(f"**Pergunta {indice + 1}** de {st.session_state.total_palavras_do_nivel} no **Nível Atual**.")
-st.progress(indice / st.session_state.total_palavras_do_nivel)
-
-
-
-        st.success(f"🥳 Fim da Escavação, **{st.session_state.nome_jogador}**!")
-        st.balloons()
-        st.markdown(f"Você completou a escavação com **{st.session_state.palavras_corretas}** acertos!")
-        st.markdown("Clique abaixo para salvar e ver o **Ranking**.")
-        st.button("Voltar para Seleção de Nível", on_click=inicializar_estado_do_jogo)
-        return
-
     # 2. EXIBIÇÃO DA PERGUNTA ATUAL
     
     palavra_correta, dica_atual = st.session_state.palavras_embaralhadas[indice]
     alternativas = gerar_alternativas(palavra_correta, st.session_state.nivel_atual)
     
     st.header(f"🗃️ Escavação em Andamento...")
-    st.markdown(f"**Pergunta {indice + 1}** de {st.session_state.total_palavras} no total.")
-    st.progress(indice / st.session_state.total_palavras)
+    st.markdown(f"**Pergunta {indice + 1}** de {st.session_state.total_palavras_do_nivel} no **Nível Atual**.")
+    st.progress(indice / st.session_state.total_palavras_do_nivel)
 
     # Dica (Pista)
     st.subheader("🔍 Pista do Sítio:")
@@ -505,7 +388,7 @@ st.progress(indice / st.session_state.total_palavras_do_nivel)
         else:
              st.warning(st.session_state.mensagem_feedback) 
             
-    st.button("Finalizar Escavação e Salvar Pontuação", on_click=inicializar_estado_do_jogo)
+    st.button("Mudar Nível", on_click=inicializar_estado_do_jogo)
 
 
 # --- 5. FUNÇÃO PRINCIPAL DE EXECUÇÃO ---
@@ -516,18 +399,17 @@ def main():
     
     aplicar_tema(st.session_state.nivel_atual)
 
-    if st.session_state.fase_jogo == "inicio" or st.session_state.fase_jogo == "finalizado":
+    if st.session_state.fase_jogo == "inicio":
         mostrar_tela_inicial()
     else:
         mostrar_tela_jogo()
         
     st.sidebar.header("Status")
-    st.sidebar.markdown(f"**Arqueólogo(a):** {st.session_state.get('nome_jogador', 'Visitante')}")
-    st.sidebar.markdown(f"**Acertos Acumulados:** {st.session_state.pontuacao_total}")
+    st.sidebar.markdown(f"**Acertos no Nível:** {st.session_state.palavras_corretas}")
+    st.sidebar.markdown(f"**Total de Acertos (Sessão):** {st.session_state.pontuacao_total}")
     
-    if st.session_state.fase_jogo == "jogando" and st.session_state.total_palavras > 0:
-         progresso_atual = st.session_state.palavras_corretas + (st.session_state.indice_palavra - st.session_state.palavras_corretas)
-         st.sidebar.markdown(f"**Progresso Total:** {st.session_state.indice_palavra} / {st.session_state.total_palavras}")
-        
+    if st.session_state.fase_jogo == "jogando" and st.session_state.total_palavras_do_nivel > 0:
+         st.sidebar.markdown(f"**Progresso:** {st.session_state.indice_palavra} / {st.session_state.total_palavras_do_nivel}")
+
 if __name__ == "__main__":
     main()
