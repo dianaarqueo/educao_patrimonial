@@ -425,8 +425,9 @@ if st.session_state.fase_jogo == "finalizado_nivel":
 # Progresso
 st.markdown(f"**Pergunta {indice + 1}** de {st.session_state.total_palavras_do_nivel} no **Nível Atual**.")
 st.progress(indice / st.session_state.total_palavras_do_nivel)
-# ...
-        
+
+
+
         st.success(f"🥳 Fim da Escavação, **{st.session_state.nome_jogador}**!")
         st.balloons()
         st.markdown(f"Você completou a escavação com **{st.session_state.palavras_corretas}** acertos!")
