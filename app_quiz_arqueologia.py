@@ -1,40 +1,69 @@
 import streamlit as st
 import random
+import pandas as pd
+import os # Importação necessária para lidar com o arquivo
+
+# --- 0. CONFIGURAÇÃO DE ARQUIVO DO RANKING ---
+RANKING_FILE = 'ranking_arqueologia.csv'
+
+def carregar_ranking():
+    """Carrega o ranking do CSV ou cria um DataFrame vazio se o arquivo não existir."""
+    if os.path.exists(RANKING_FILE):
+        df = pd.read_csv(RANKING_FILE)
+        # Garante que a coluna 'Pontuação' seja numérica e ordena
+        df['Pontuação'] = pd.to_numeric(df['Pontuação'], errors='coerce')
+        return df.sort_values(by='Pontuação', ascending=False).reset_index(drop=True)
+    else:
+        return pd.DataFrame(columns=['Nome', 'Pontuação'])
+
+def salvar_ranking(nome, pontuacao):
+    """Adiciona a nova pontuação ao ranking e salva no CSV."""
+    df = carregar_ranking()
+    novo_registro = pd.DataFrame([{'Nome': nome, 'Pontuação': pontuacao}])
+    
+    # Concatena o novo registro, ordena e pega o top 10 (opcional)
+    df_atualizado = pd.concat([df, novo_registro], ignore_index=True)
+    df_atualizado = df_atualizado.sort_values(by='Pontuação', ascending=False)
+    
+    # Limita ao Top 10 para não sobrecarregar
+    df_atualizado = df_atualizado.head(10) 
+    
+    df_atualizado.to_csv(RANKING_FILE, index=False)
+    return df_atualizado.reset_index(drop=True)
 
 # --- 1. ESTRUTURA DE DADOS COM DICAS SIMPLIFICADAS ---
-
 DADOS_ARQUEOLOGIA = {
     "Fácil": {
-        "VESTIGIO": "Qualquer marca ou resto de objeto antigo deixado por humanos.",
-        "ESCAVAÇAO": "O trabalho de cavar o solo com cuidado para encontrar material arqueológico.",
+        "VESTIGIO": "Qualquer marca ou resto de algo antigo deixado por humanos.",
+        "ESCAVACAO": "O trabalho de cavar o solo com cuidado para encontrar coisas antigas.",
         "CULTURA": "O jeito de viver, as crenças e os costumes de um povo do passado.",
         "RUINA": "O que sobrou de um prédio ou construção muito antiga, que caiu.",
-        "HISTORIA": "O estudo da humanidade, começando após a invenção da escrita.",
+        "HISTORIA": "O estudo do passado humano, começando após a invenção da escrita.",
         "CERAMICA": "Objetos feitos de argila (barro) queimada, como potes e vasos.",
         "CAMADA": "Cada 'fatía' de terra que se depositou com o tempo, indicando idades.",
-        "SITIO": "O local exato onde os arqueólogos encontram e estudam vestígios.",
+        "SITIO": "O local exato onde os arqueólogos encontram e estudam os restos antigos.",
         "MUSEU": "O lugar onde os artefatos encontrados são guardados e expostos ao público.",
         "PRE HISTORIA": "O tempo da humanidade antes de inventarem a escrita.",
         "ARTEFATO": "Qualquer objeto feito ou modificado pelas mãos humanas."
     },
     "Médio": {
         "ESTRATIGRAFIA": "O estudo das camadas de solo (estratos) para entender a ordem dos eventos.",
-        "PINTURA RUPESTRE": "Figuras feitas por humanos em paredes de cavernas ou rochas.",
-        "DATAÇAO": "O método usado para descobrir a idade exata de um objeto ou de uma camada.",
+        "PINTURA RUPESTRE": "Desenhos e pinturas feitas por humanos em paredes de cavernas ou rochas.",
+        "DATAÇAO": "A técnica usada para descobrir a idade exata de um objeto ou de uma camada.",
         "TIPOLOGIA": "O sistema de classificar os artefatos agrupando-os por forma e função.",
-        "PROSPECÇAO": "A busca inicial e reconhecimento de sítios arqueológicos na paisagem.",
-        "TOPOGRAFIA": "A ciência de medição e representação detalhada do relevo, contornos e acidentes naturais e artificiais de uma porção de terra.",
+        "PROSPECCAO": "A busca inicial e reconhecimento de sítios arqueológicos na paisagem.",
+        "JAZIDA": "Um local que contém muitos vestígios ou depósitos arqueológicos.",
         "SEPULTAMENTO": "O ato de enterrar um corpo ou restos mortais de forma intencional.",
         "RADIOCARBONO": "O método científico que usa o Carbono-14 para datar materiais orgânicos.",
         "LITICO": "Tudo o que é feito ou relacionado à pedra, como ferramentas de corte.",
-        "INDUSTRIA": "O conjunto de ferramentas de pedra feitas com a mesma técnica."
+        "INDUSTRIA": "O conjunto de ferramentas de pedra feitas com a mesma técnica (ex: 'Indústria lítica')."
     },
     "Difícil": {
         "TRADIÇAO": "Um conjunto de traços culturais que dura muito tempo e se espalha por uma grande área.",
         "PERCUTOR": "Uma pedra ou ferramenta usada para bater em outra e lascá-la (fazer uma ferramenta nova).",
         "TAFONOMIA": "O estudo de como os restos (ossos, plantas) se transformam e se enterram até virarem vestígios.",
         "ETNOARQUEOLOGIA": "O estudo de povos atuais (vivos) para ajudar a entender o comportamento de povos antigos.",
-        "ANTROPOFAGIA": "O costume de consumir carne humana, estudado através de marcas em ossos antigos.",
+        "ANTROPOFAGIA": "O costume de comer carne humana, estudado através de marcas em ossos antigos.",
         "PALEOPATOLOGIA": "O estudo de doenças, feridas e lesões encontradas em esqueletos e múmias antigas.",
         "ACERVO": "Todo o conjunto de objetos, dados e documentos guardados em um museu ou instituição.",
         "CONTEXTO": "A posição exata, a relação e o significado de um artefato dentro de seu local de achado.",
@@ -49,18 +78,18 @@ DADOS_ARQUEOLOGIA = {
             "HERCULANO": "Cidade romana, perto de Pompeia, que foi soterrada pela erupção do Vesúvio."
         },
         "Subaquática": {
-            "NAUFRAGIO": "Os restos de uma embarcação que afundou no mar ou em um rio.",
+            "NAUFRAGIO": "Os restos de um barco ou navio que afundou no mar ou em um rio.",
             "NAVIO": "A embarcação principal de interesse nesta subárea da arqueologia.",
             "ANCORA": "Objeto pesado que prende o barco ao fundo, muitas vezes o primeiro achado de um naufrágio.",
-            "PIROGA": "Tipo de embarcação indígena.",
-            "INTERFACE": "A faixa de transição onde a água encontra o solo."
+            "MARITIMA": "Tudo que se relaciona com o mar, navegação e vida costeira antiga.",
+            "INTERFACE": "O ponto onde a água encontra o sedimento do fundo."
         },
         "Zooarqueologia": {
             "OSTEOLOGIA": "O estudo dos ossos; vital para identificar os restos de animais.",
-            "FAUNA": "O conjunto de espécies de animais que viviam em determinado sítio.",
-            "ESQUELETO": "A estrutura óssea do animal, usada para saber a espécie.",
-            "DIETA": "O que os humanos comiam, baseado nos restos de animais encontrados.",
-            "DOMESTICACAO": "O processo de transformar animais selvagens em dependentes dos humanos."
+            "FAUNA": "O conjunto de espécies de animais que viviam em um sítio antigo.",
+            "ESQUELETO": "A estrutura óssea do animal, usada para saber a espécie e o que foi consumido.",
+            "DIETA": "O estudo do que os humanos comiam, baseado nos restos de animais encontrados.",
+            "DOMESTICACAO": "O processo de transformar animais selvagens em dependentes dos humanos (criação)."
         },
         "Geoarqueologia": {
             "SEDIΜENTO": "O material (areia, argila) que se acumula em camadas no chão.",
@@ -76,6 +105,15 @@ DADOS_ARQUEOLOGIA = {
 
 def inicializar_estado_do_jogo():
     """Define o estado inicial ou reinicia o jogo."""
+    
+    # Salva a pontuação se estiver voltando do jogo para o menu (e se houve acertos)
+    if 'fase_jogo' in st.session_state and st.session_state.fase_jogo == "jogando":
+        if st.session_state.pontuacao_total > 0 and st.session_state.get('nome_jogador'):
+             st.session_state.ranking_atualizado = salvar_ranking(
+                 st.session_state.nome_jogador, 
+                 st.session_state.pontuacao_total
+             )
+        
     st.session_state.nivel_atual = None
     st.session_state.indice_palavra = 0
     st.session_state.palavras_embaralhadas = []
@@ -84,17 +122,19 @@ def inicializar_estado_do_jogo():
     st.session_state.mensagem_feedback = ""
     st.session_state.fase_jogo = "inicio"
     
-    # Manter a pontuação total (só zera quando o app é reiniciado)
-    if 'pontuacao_total' not in st.session_state:
-        st.session_state.pontuacao_total = 0
+    # Zera a pontuação total APENAS quando volta para o menu principal
+    st.session_state.pontuacao_total = 0
         
     st.session_state.resposta_verificada = False
     st.session_state.radio_selection = None
+    
+    # Inicializa ou carrega o ranking
+    if 'ranking_atualizado' not in st.session_state:
+        st.session_state.ranking_atualizado = carregar_ranking()
 
+# Funções auxiliares de palavras e alternativas (mantidas)
 def get_palavras_do_contexto(nome_nivel):
-    """
-    Retorna a lista de todas as palavras (chaves) de um nível ou subárea.
-    """
+    """Retorna a lista de todas as palavras (chaves) de um nível ou subárea."""
     if nome_nivel in DADOS_ARQUEOLOGIA:
         return list(DADOS_ARQUEOLOGIA[nome_nivel].keys())
     elif nome_nivel in DADOS_ARQUEOLOGIA["Específicos"]:
@@ -116,21 +156,15 @@ TODAS_AS_PALAVRAS = extrair_todas_as_palavras(DADOS_ARQUEOLOGIA)
 
 
 def gerar_alternativas(palavra_correta, nome_nivel):
-    """
-    Gera três alternativas contextuais (uma correta e duas do mesmo contexto), 
-    priorizando o contexto restrito do nível/subárea.
-    """
-    palavras_contexto = get_palavras_do_contexto(nome_nivel)
+    """Gera três alternativas contextuais (uma correta e duas do mesmo contexto)."""
     
-    # 1. Tenta tirar palavras do contexto imediato (mesmo nível/subárea)
+    palavras_contexto = get_palavras_do_contexto(nome_nivel)
     distratores_potenciais = [p for p in palavras_contexto if p != palavra_correta]
     alternativas_falsas = []
     
     if len(distratores_potenciais) >= 2:
-        # Se houver palavras suficientes no contexto, usa 2 delas
         alternativas_falsas = random.sample(distratores_potenciais, 2)
     else:
-        # Se houver 0 ou 1, usa o que tem e busca o restante em palavras globais relevantes
         alternativas_falsas = distratores_potenciais
         num_faltante = 2 - len(alternativas_falsas)
         
@@ -143,10 +177,8 @@ def gerar_alternativas(palavra_correta, nome_nivel):
             if len(outras_palavras_globais) >= num_faltante:
                 alternativas_falsas.extend(random.sample(outras_palavras_globais, num_faltante))
             else:
-                # Fallback extremo para garantir 3 opções (pode ter repetição, mas mantém a estabilidade)
                 alternativas_falsas.extend(random.sample(TODAS_AS_PALAVRAS, num_faltante))
 
-    # 3. Monta a lista final e embaralha a ordem
     alternativas = [palavra_correta] + alternativas_falsas
     random.shuffle(alternativas)
     return alternativas
@@ -154,10 +186,9 @@ def gerar_alternativas(palavra_correta, nome_nivel):
 
 def carregar_nivel(nome_nivel):
     """Carrega as palavras para um nível e inicia o estado."""
-    inicializar_estado_do_jogo() # Reinicia antes de carregar um novo nível
+    # A pontuação total NÃO deve ser zerada aqui, apenas no retorno ao menu
     
     st.session_state.nivel_atual = nome_nivel
-    st.session_state.pontuacao_nivel = 0
     
     if nome_nivel in DADOS_ARQUEOLOGIA:
         palavras_dicas = DADOS_ARQUEOLOGIA[nome_nivel]
@@ -167,24 +198,28 @@ def carregar_nivel(nome_nivel):
         st.error("Nível não encontrado!")
         return
 
-    st.session_state.total_palavras = len(palavras_dicas)
+    st.session_state.total_palavras += len(palavras_dicas) # Adiciona ao total acumulado
+    
     palavras_lista = list(palavras_dicas.items())
     random.shuffle(palavras_lista)
-    st.session_state.palavras_embaralhadas = palavras_lista
+    
+    # Adiciona as palavras do novo nível à lista embaralhada
+    st.session_state.palavras_embaralhadas.extend(palavras_lista)
+    
     st.session_state.fase_jogo = "jogando"
 
 def avancar_pergunta():
     """Limpa o feedback, avança o índice e verifica se o nível terminou."""
     st.session_state.resposta_verificada = False
     st.session_state.mensagem_feedback = ""
-    st.session_state.radio_selection = None # Limpa a seleção do rádio
+    st.session_state.radio_selection = None 
     
     # Avança para a próxima palavra
     st.session_state.indice_palavra += 1
     
-    # Verifica se o nível terminou após o avanço
-    if st.session_state.indice_palavra >= st.session_state.total_palavras:
-        st.session_state.fase_jogo = "finalizado"
+    # Nota: A lógica de 'finalizado' agora é tratada implicitamente ao voltar para a tela inicial
+    # Se todos os níveis fossem sequenciais, a lógica estaria aqui.
+    # Como os níveis são escolhidos, o jogo só termina quando o usuário clica em "Mudar Nível".
 
 def submeter_resposta(palavra_correta):
     """
@@ -195,16 +230,15 @@ def submeter_resposta(palavra_correta):
     
     if not resposta_selecionada:
         st.session_state.mensagem_feedback = "⚠️ Por favor, selecione uma alternativa antes de verificar!"
-        st.session_state.resposta_verificada = False # Mantém o botão verificar visível
+        st.session_state.resposta_verificada = False
         return
 
-    # Se a resposta foi selecionada, faça a verificação
-    st.session_state.resposta_verificada = True # Muda o estado para verificado
+    st.session_state.resposta_verificada = True
     
     if resposta_selecionada == palavra_correta:
         st.session_state.mensagem_feedback = f"✅ **Resposta Certa!** A palavra é: *{palavra_correta}*."
         st.session_state.palavras_corretas += 1
-        st.session_state.pontuacao_total += 1
+        st.session_state.pontuacao_total += 1 # Pontuação acumulada
     else:
         st.session_state.mensagem_feedback = f"❌ **Resposta Errada.** A correta era: *{palavra_correta}*."
 
@@ -214,40 +248,37 @@ def submeter_resposta(palavra_correta):
 def aplicar_tema(nivel):
     """Aplica o CSS com alto contraste, cores temáticas e decoração para cada subárea."""
     
-    FUNDO_PADRAO = "#F5F5DC"  # Bege claro (papel de campo)
-    TEXTO_PADRAO = "#4B3832" # Marrom escuro
+    FUNDO_PADRAO = "#F5F5DC"
+    TEXTO_PADRAO = "#4B3832"
     
     # Mapeamento de estilos temáticos
     temas = {
-        # Clássica: Papiro e Hieróglifos.
         "Clássica": {
             'estilo_fundo': 'background-color: #F8F4E3;', 
-            'cor_texto': '#8B4513', # Marrom Sépia
+            'cor_texto': '#8B4513',
             'sombra_texto': 'none',
             'emoji': "🏺🏛️"
         },
-       "Subaquática": {
+        "Subaquática": {
             'estilo_fundo': 'background: linear-gradient(to bottom, #001f3f, #003366);', 
-            'cor_texto': '#FFFFFF', # AGORA É BRANCO PURO
-            'sombra_texto': '1px 1px 2px #000000', # Sombra preta para destacar
+            'cor_texto': '#FFFFFF', # Branco Puro
+            'sombra_texto': '1px 1px 2px #000000',
             'emoji': "🌊⚓"
         },
-        # Zooarqueologia: Ossos e Natureza.
         "Zooarqueologia": {
             'estilo_fundo': 'background-color: #F0F0F0;', 
-            'cor_texto': '#36454F', # Cinza Ardósia
+            'cor_texto': '#36454F',
             'sombra_texto': 'none',
             'emoji': "🦴🌿"
         },
         "Geoarqueologia": {
             'estilo_fundo': 'background: linear-gradient(to bottom, #A0522D, #696969);', 
-            'cor_texto': '#FFFFFF', # AGORA É BRANCO PURO
-            'sombra_texto': '1px 1px 2px #000000', # Sombra preta para destacar
+            'cor_texto': '#FFFFFF', # Branco Puro
+            'sombra_texto': '1px 1px 2px #000000',
             'emoji': "⛰️🪨"
         }
     }
 
-    # Seleciona o tema ou usa o padrão
     tema_config = temas.get(nivel, {
         'estilo_fundo': f'background-color: {FUNDO_PADRAO};',
         'cor_texto': TEXTO_PADRAO,
@@ -259,154 +290,143 @@ def aplicar_tema(nivel):
     cor_primaria = tema_config['cor_texto']
     sombra_texto = tema_config['sombra_texto']
     
-    # 2. INJEÇÃO DE CSS
-    
-    st.markdown(
-        f'<style>.stApp {{ {estilo_aplicar} }}</style>', 
-        unsafe_allow_html=True
-    )
+    st.markdown(f'<style>.stApp {{ {estilo_aplicar} }}</style>', unsafe_allow_html=True)
     
     # Adiciona decoração ao título (se estiver no jogo)
     if st.session_state.nivel_atual and st.session_state.fase_jogo != "inicio":
         emoji = tema_config['emoji']
         st.sidebar.markdown(f"### {emoji} **Nível: {st.session_state.nivel_atual}**")
         
-    # 3. CSS PARA GARANTIR LEGIBILIDADE DOS COMPONENTES
+    # CSS PARA GARANTIR LEGIBILIDADE DOS COMPONENTES
     st.markdown(f"""
     <style>
-    /* 1. Cores de Texto e Títulos (Aplicado à Div Principal) */
-   .stApp, .stButton, .stProgress, .stRadio, .stForm, .stSidebar, .stAlert {{
+    /* 1. Cores de Texto e Títulos */
+    .stApp, .stButton, .stProgress, .stRadio, .stForm, .stSidebar, .stAlert {{
         color: {cor_primaria} !important;
         text-shadow: {sombra_texto};
     }}
-    
-    /* 2. Títulos */
     h1, h2, h3 {{
         color: {cor_primaria} !important; 
         border-bottom: 2px solid #D2B48C;
         padding-bottom: 5px;
         text-shadow: {sombra_texto};
     }}
-    
-    /* 3. Área de Dica (Mantida clara para alto contraste) */
+    /* 2. Área de Dica (Mantida clara) */
     .stMarkdown p {{
-        background-color: rgba(255, 255, 240, 0.95) !important; /* Quase branco sólido */
-        color: #4B3832 !important; /* Texto escuro dentro da caixa de dica */
+        background-color: rgba(255, 255, 240, 0.95) !important;
+        color: #4B3832 !important;
         border: 1px solid {cor_primaria};
         text-shadow: none;
     }}
-    
-   /* 4. Botões (mantidos verdes para destaque) */
+    /* 3. Botões (Contraste reforçado) */
     .stButton>button {{
-        background-color: #6B8E23; 
+        background-color: #38761D;
         color: white;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
-        text-shadow: none;
+        border: 2px solid #548235;
+        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+        font-weight: bold;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
     }}
-    
-    /* 5. Radio Buttons (FORÇA a cor do texto das alternativas) */
+    /* 4. Radio Buttons (Contraste reforçado nas alternativas) */
     .stRadio label > div:nth-child(2) > div {{
         color: {cor_primaria} !important;
         text-shadow: {sombra_texto};
     }}
-    
     </style>
     """, unsafe_allow_html=True)
 
 
-    # 2. APLICAÇÃO DE DECORAÇÃO NO TÍTULO
-    
-    # Adiciona o emoji temático ao título do nível
-    if st.session_state.nivel_atual:
-        emoji = tema_config['emoji']
-        st.sidebar.markdown(f"### {emoji} **Nível Atual: {st.session_state.nivel_atual}**")
-    
-    # 3. CSS COMUM (Garantindo Consistência)
-    st.markdown(f"""
-    <style>
-    /* Estilos para Títulos (Herda cor do tema) */
-    h1, h2, h3 {{
-        color: {cor_primaria} !important; 
-        border-bottom: 2px solid #D2B48C;
-        padding-bottom: 5px;
-    }}
-    /* Botões */
-    .stButton>button {{
-        background-color: #6B8E23; 
-        color: white;
-        border: none;
-        border-radius: 5px;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
-        font-weight: bold;
-    }}
-    /* Área de Dica (Manter sempre claro para máxima legibilidade) */
-    .stMarkdown p {{
-        font-size: 1.2em;
-        padding: 15px;
-        border: 1px solid #D2B48C;
-        background-color: rgba(255, 255, 240, 0.9); /* Fundo quase branco semi-transparente */
-        border-radius: 8px;
-        color: #4B3832; /* Texto escuro para alto contraste na caixa de dica */
-        text-shadow: none;
-    }}
-    /* Cores das Alternativas de Rádio (Garante que o texto do rádio seja legível contra o fundo) */
-    .stRadio label > div:first-child {{
-        color: {cor_primaria};
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # --- 4. EXIBIÇÃO DA INTERFACE ---
+# --- 4. EXIBIÇÃO DA INTERFACE ---
 
 def mostrar_tela_inicial():
-    """Mostra a tela de seleção de nível."""
-    st.title("🗺️ Arqueologia em Camadas: O Quiz")
-    st.header("Selecione o seu Nível de Descoberta")
+    """Mostra a tela de seleção de nível e o ranking."""
     
-    # Níveis Regulares
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.button("Nível 1: FÁCIL (Fundamentos)", on_click=carregar_nivel, args=("Fácil",), use_container_width=True)
-    with col2:
-        st.button("Nível 2: MÉDIO (Técnicas de Campo)", on_click=carregar_nivel, args=("Médio",), use_container_width=True)
-    with col3:
-        st.button("Nível 3: DIFÍCIL (Teoria Avançada)", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
+    st.title("🗺️ Mistério Arqueológico: O Quiz")
+    
+    # --- NOVIDADE: CAMPO DE NOME DO JOGADOR ---
+    st.header("1. Identificação do Arqueólogo")
+    
+    # Campo de texto para o nome
+    st.text_input(
+        "Insira seu nome/apelido de campo:", 
+        key="nome_jogador", 
+        placeholder="Ex: Indiana Jones"
+    )
 
-    # Níveis Específicos
-    st.subheader("Nível 4: ESPECÍFICOS (Subáreas)")
-    col_sub1, col_sub2, col_sub3, col_sub4 = st.columns(4)
-    with col_sub1:
-        st.button("Clássica", on_click=carregar_nivel, args=("Clássica",), help="Egiptologia, Roma, Grécia.", use_container_width=True)
-    with col_sub2:
-        st.button("Subaquática", on_click=carregar_nivel, args=("Subaquática",), help="Naufrágios, Marítima.", use_container_width=True)
-    with col_sub3:
-        st.button("Zooarqueologia", on_click=carregar_nivel, args=("Zooarqueologia",), help="Ossos, Dieta, Fauna.", use_container_width=True)
-    with col_sub4:
-        st.button("Geoarqueologia", on_click=carregar_nivel, args=("Geoarqueologia",), help="Solos, Sedimentos, Geologia.", use_container_width=True)
+    # Verifica se o nome foi inserido antes de mostrar os níveis
+    if st.session_state.get('nome_jogador') and st.session_state.nome_jogador.strip() != "":
+        st.success(f"Arqueólogo(a) **{st.session_state.nome_jogador}**, sua escavação pode começar!")
+
+        st.header("2. Selecione o seu Nível de Descoberta")
+        
+        # Níveis Regulares
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.button("Nível 1: FÁCIL", on_click=carregar_nivel, args=("Fácil",), use_container_width=True)
+        with col2:
+            st.button("Nível 2: MÉDIO", on_click=carregar_nivel, args=("Médio",), use_container_width=True)
+        with col3:
+            st.button("Nível 3: DIFÍCIL", on_click=carregar_nivel, args=("Difícil",), use_container_width=True)
+
+        # Níveis Específicos
+        st.subheader("Nível 4: ESPECÍFICOS (Subáreas)")
+        col_sub1, col_sub2, col_sub3, col_sub4 = st.columns(4)
+        with col_sub1:
+            st.button("Clássica", on_click=carregar_nivel, args=("Clássica",), use_container_width=True)
+        with col_sub2:
+            st.button("Subaquática", on_click=carregar_nivel, args=("Subaquática",), use_container_width=True)
+        with col_sub3:
+            st.button("Zooarqueologia", on_click=carregar_nivel, args=("Zooarqueologia",), use_container_width=True)
+        with col_sub4:
+            st.button("Geoarqueologia", on_click=carregar_nivel, args=("Geoarqueologia",), use_container_width=True)
+
+    else:
+        st.info("Por favor, insira seu nome para iniciar o jogo.")
+
+    # --- NOVIDADE: EXIBIÇÃO DO RANKING ---
+    st.markdown("---")
+    st.header("🏆 Ranking dos Melhores Arqueólogos")
+    df_ranking = carregar_ranking()
+    
+    if not df_ranking.empty:
+        # Renomeia as colunas para exibição amigável
+        df_display = df_ranking.rename(columns={'Nome': 'Nome', 'Pontuação': 'Acertos'})
+        # Adiciona a coluna de Posição
+        df_display.index = df_display.index + 1
+        df_display.index.name = 'Posição'
+        st.table(df_display)
+    else:
+        st.info("Nenhum registro de pontuação ainda. Seja o primeiro a jogar!")
 
 
 def mostrar_tela_jogo():
     """Mostra a interface do quiz de múltipla escolha."""
     
-    # Lida com o final do nível
-    if st.session_state.fase_jogo == "finalizado":
-        st.success(f"🥳 Nível '{st.session_state.nivel_atual}' COMPLETO!")
+    indice = st.session_state.indice_palavra
+    
+    # 1. TRATAMENTO DE FIM DE NÍVEL (Se todas as palavras de todos os níveis escolhidos acabaram)
+    if indice >= st.session_state.total_palavras:
+        # Salva a pontuação final (se ainda não foi salva)
+        if st.session_state.pontuacao_total > 0 and st.session_state.get('nome_jogador'):
+             st.session_state.ranking_atualizado = salvar_ranking(
+                 st.session_state.nome_jogador, 
+                 st.session_state.pontuacao_total
+             )
+        
+        st.success(f"🥳 Fim da Escavação, **{st.session_state.nome_jogador}**!")
         st.balloons()
-        st.write(f"Você acertou **{st.session_state.palavras_corretas}** de **{st.session_state.total_palavras}** palavras neste nível.")
+        st.markdown(f"Você completou a escavação com **{st.session_state.palavras_corretas}** acertos!")
+        st.markdown("Clique abaixo para salvar e ver o **Ranking**.")
         st.button("Voltar para Seleção de Nível", on_click=inicializar_estado_do_jogo)
         return
 
-    # Exibe o jogo em andamento
+    # 2. EXIBIÇÃO DA PERGUNTA ATUAL
     
-    # Palavra e Dica Atual
-    indice = st.session_state.indice_palavra
     palavra_correta, dica_atual = st.session_state.palavras_embaralhadas[indice]
-    
-    # Gera as alternativas para a palavra atual
     alternativas = gerar_alternativas(palavra_correta, st.session_state.nivel_atual)
     
-    st.header(f"🗃️ Nível: {st.session_state.nivel_atual}")
-    st.markdown(f"**Palavra {indice + 1}** de {st.session_state.total_palavras}")
+    st.header(f"🗃️ Escavação em Andamento...")
+    st.markdown(f"**Pergunta {indice + 1}** de {st.session_state.total_palavras} no total.")
     st.progress(indice / st.session_state.total_palavras)
 
     # Dica (Pista)
@@ -418,34 +438,31 @@ def mostrar_tela_jogo():
     # Formulário para a Múltipla Escolha
     with st.form(key=f"form_quiz_{indice}"):
         
-        # O st.radio armazena a seleção em st.session_state.radio_selection
         st.radio(
             "Alternativas:",
             alternativas,
-            key="radio_selection", # CHAVE FIXA para o callback ler o valor
+            key="radio_selection",
             disabled=st.session_state.resposta_verificada,
             index=None
         )
         
-        # --- Lógica do Botão Dinâmico ---
+        # Lógica do Botão Dinâmico
         col_btn1, col_btn2 = st.columns([1, 4])
         
         with col_btn1:
             if not st.session_state.resposta_verificada:
-                # Botão 'Verificar' - Usa o callback para submeter a resposta
                 st.form_submit_button(
                     label='Escavar e Verificar', 
                     on_click=submeter_resposta, 
                     args=(palavra_correta,)
                 )
             else:
-                # Botão 'Próxima Pergunta' - Visível após responder
                 st.form_submit_button(
                     label='Próxima Pergunta >>', 
                     on_click=avancar_pergunta
                 )
                 
-    # Feedback da última tentativa (Exibido após verificar)
+    # Feedback da última tentativa
     if st.session_state.mensagem_feedback:
         if "Certa" in st.session_state.mensagem_feedback:
             st.success(st.session_state.mensagem_feedback)
@@ -454,29 +471,29 @@ def mostrar_tela_jogo():
         else:
              st.warning(st.session_state.mensagem_feedback) 
             
-    st.button("Mudar Nível", on_click=inicializar_estado_do_jogo)
+    st.button("Finalizar Escavação e Salvar Pontuação", on_click=inicializar_estado_do_jogo)
 
 
 # --- 5. FUNÇÃO PRINCIPAL DE EXECUÇÃO ---
 
 def main():
-    # Inicializa o estado se for a primeira vez
     if 'fase_jogo' not in st.session_state:
         inicializar_estado_do_jogo()
     
-    # Aplica o tema visual dependendo do nível atual
     aplicar_tema(st.session_state.nivel_atual)
 
-    # Gerencia a tela a ser exibida
-    if st.session_state.nivel_atual is None:
+    if st.session_state.fase_jogo == "inicio" or st.session_state.fase_jogo == "finalizado":
         mostrar_tela_inicial()
     else:
         mostrar_tela_jogo()
         
     st.sidebar.header("Status")
-    st.sidebar.markdown(f"**Total de Acertos Acumulados:** {st.session_state.pontuacao_total}")
-    if st.session_state.nivel_atual and st.session_state.fase_jogo != "inicio":
-         st.sidebar.markdown(f"**Progresso no Nível {st.session_state.nivel_atual}:** {st.session_state.palavras_corretas}/{st.session_state.total_palavras}")
-
+    st.sidebar.markdown(f"**Arqueólogo(a):** {st.session_state.get('nome_jogador', 'Visitante')}")
+    st.sidebar.markdown(f"**Acertos Acumulados:** {st.session_state.pontuacao_total}")
+    
+    if st.session_state.fase_jogo == "jogando" and st.session_state.total_palavras > 0:
+         progresso_atual = st.session_state.palavras_corretas + (st.session_state.indice_palavra - st.session_state.palavras_corretas)
+         st.sidebar.markdown(f"**Progresso Total:** {st.session_state.indice_palavra} / {st.session_state.total_palavras}")
+        
 if __name__ == "__main__":
     main()
