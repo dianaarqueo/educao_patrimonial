@@ -332,10 +332,16 @@ def aplicar_tema(nivel):
         text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
     }}
     /* 4. Radio Buttons (Contraste reforçado nas alternativas) */
-    .stRadio label > div:nth-child(2) > div {{
+      /* Cores das Alternativas de Rádio - Forçar cor do texto das opções */
+    .stRadio > div > div > div > label > div {{
         color: {cor_primaria} !important;
         text-shadow: {sombra_texto};
     }}
+    /* Alternativa mais específica para o texto das opções do radio */
+    .stRadio label > div:last-child > div {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+        font-weight: 500;
     </style>
     """, unsafe_allow_html=True)
 
