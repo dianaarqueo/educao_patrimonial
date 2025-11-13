@@ -34,14 +34,14 @@ def salvar_ranking(nome, pontuacao):
 # --- 1. ESTRUTURA DE DADOS COM DICAS SIMPLIFICADAS ---
 DADOS_ARQUEOLOGIA = {
     "Fácil": {
-        "VESTIGIO": "Qualquer marca ou resto de algo antigo deixado por humanos.",
+        "VESTIGIO": "Qualquer marca ou remanescente de algo antigo deixado por humanos.",
         "ESCAVACAO": "O trabalho de cavar o solo com cuidado para encontrar coisas antigas.",
-        "CULTURA": "O jeito de viver, as crenças e os costumes de um povo do passado.",
-        "RUINA": "O que sobrou de um prédio ou construção muito antiga, que caiu.",
+        "CULTURA": "O jeito de viver, as crenças e os costumes de um povo.",
+        "RUINA": "O que resistiu de um prédio ou construção muito antiga, que caiu.",
         "HISTORIA": "O estudo do passado humano, começando após a invenção da escrita.",
         "CERAMICA": "Objetos feitos de argila (barro) queimada, como potes e vasos.",
-        "CAMADA": "Cada 'fatía' de terra que se depositou com o tempo, indicando idades.",
-        "SITIO": "O local exato onde os arqueólogos encontram e estudam os restos antigos.",
+        "CAMADA": "Cada 'fatia' de terra que se depositou com o tempo, indicando idades.",
+        "SITIO": "O local exato onde os arqueólogos encontram e estudam vestígios.",
         "MUSEU": "O lugar onde os artefatos encontrados são guardados e expostos ao público.",
         "PRE HISTORIA": "O tempo da humanidade antes de inventarem a escrita.",
         "ARTEFATO": "Qualquer objeto feito ou modificado pelas mãos humanas."
@@ -52,11 +52,10 @@ DADOS_ARQUEOLOGIA = {
         "DATAÇAO": "A técnica usada para descobrir a idade exata de um objeto ou de uma camada.",
         "TIPOLOGIA": "O sistema de classificar os artefatos agrupando-os por forma e função.",
         "PROSPECCAO": "A busca inicial e reconhecimento de sítios arqueológicos na paisagem.",
-        "JAZIDA": "Um local que contém muitos vestígios ou depósitos arqueológicos.",
         "SEPULTAMENTO": "O ato de enterrar um corpo ou restos mortais de forma intencional.",
         "RADIOCARBONO": "O método científico que usa o Carbono-14 para datar materiais orgânicos.",
         "LITICO": "Tudo o que é feito ou relacionado à pedra, como ferramentas de corte.",
-        "INDUSTRIA": "O conjunto de ferramentas de pedra feitas com a mesma técnica (ex: 'Indústria lítica')."
+        "INDUSTRIA": "O conjunto de ferramentas de pedra feitas com a mesma técnica."
     },
     "Difícil": {
         "TRADIÇAO": "Um conjunto de traços culturais que dura muito tempo e se espalha por uma grande área.",
@@ -78,15 +77,15 @@ DADOS_ARQUEOLOGIA = {
             "HERCULANO": "Cidade romana, perto de Pompeia, que foi soterrada pela erupção do Vesúvio."
         },
         "Subaquática": {
-            "NAUFRAGIO": "Os restos de um barco ou navio que afundou no mar ou em um rio.",
+            "NAUFRAGIO": "Os vestígios de uma embarcação que afundou no mar ou em um rio.",
             "NAVIO": "A embarcação principal de interesse nesta subárea da arqueologia.",
             "ANCORA": "Objeto pesado que prende o barco ao fundo, muitas vezes o primeiro achado de um naufrágio.",
             "MARITIMA": "Tudo que se relaciona com o mar, navegação e vida costeira antiga.",
-            "INTERFACE": "O ponto onde a água encontra o sedimento do fundo."
+            "INTERFACE": "A faixa de transição entre a água e ambiente terreste."
         },
         "Zooarqueologia": {
             "OSTEOLOGIA": "O estudo dos ossos; vital para identificar os restos de animais.",
-            "FAUNA": "O conjunto de espécies de animais que viviam em um sítio antigo.",
+            "FAUNA": "O conjunto de espécies de animais que viviam em um sítio.",
             "ESQUELETO": "A estrutura óssea do animal, usada para saber a espécie e o que foi consumido.",
             "DIETA": "O estudo do que os humanos comiam, baseado nos restos de animais encontrados.",
             "DOMESTICACAO": "O processo de transformar animais selvagens em dependentes dos humanos (criação)."
@@ -185,11 +184,17 @@ def gerar_alternativas(palavra_correta, nome_nivel):
 
 
 def carregar_nivel(nome_nivel):
-    """Carrega as palavras para um nível e inicia o estado."""
-    # A pontuação total NÃO deve ser zerada aqui, apenas no retorno ao menu
+    """Carrega as palavras para um nível, ZERA o estado do quiz atual e mantém a pontuação total."""
     
+    # 1. ZERA O ESTADO DO QUIZ ATUAL (Variáveis que controlam a pergunta)
     st.session_state.nivel_atual = nome_nivel
+    st.session_state.indice_palavra = 0 # Zera o índice
+    st.session_state.palavras_corretas = 0 # Zera acertos do nível atual (se precisar usar)
+    st.session_state.mensagem_feedback = ""
+    st.session_state.resposta_verificada = False
+    st.session_state.radio_selection = None
     
+    # 2. CARREGA AS PALAVRAS DO NOVO NÍVEL
     if nome_nivel in DADOS_ARQUEOLOGIA:
         palavras_dicas = DADOS_ARQUEOLOGIA[nome_nivel]
     elif nome_nivel in DADOS_ARQUEOLOGIA["Específicos"]:
@@ -198,13 +203,12 @@ def carregar_nivel(nome_nivel):
         st.error("Nível não encontrado!")
         return
 
-    st.session_state.total_palavras += len(palavras_dicas) # Adiciona ao total acumulado
-    
+    # 3. ATUALIZA O TOTAL E EMBARALHA
+    # A lista de palavras DEVE ser substituída pelas novas do nível, não estendida.
+    st.session_state.total_palavras_do_nivel = len(palavras_dicas) # Novo total para a barra de progresso
     palavras_lista = list(palavras_dicas.items())
     random.shuffle(palavras_lista)
-    
-    # Adiciona as palavras do novo nível à lista embaralhada
-    st.session_state.palavras_embaralhadas.extend(palavras_lista)
+    st.session_state.palavras_embaralhadas = palavras_lista # Substitui a lista
     
     st.session_state.fase_jogo = "jogando"
 
@@ -399,19 +403,29 @@ def mostrar_tela_inicial():
         st.info("Nenhum registro de pontuação ainda. Seja o primeiro a jogar!")
 
 
-def mostrar_tela_jogo():
-    """Mostra a interface do quiz de múltipla escolha."""
-    
-    indice = st.session_state.indice_palavra
-    
-    # 1. TRATAMENTO DE FIM DE NÍVEL (Se todas as palavras de todos os níveis escolhidos acabaram)
-    if indice >= st.session_state.total_palavras:
-        # Salva a pontuação final (se ainda não foi salva)
-        if st.session_state.pontuacao_total > 0 and st.session_state.get('nome_jogador'):
-             st.session_state.ranking_atualizado = salvar_ranking(
-                 st.session_state.nome_jogador, 
-                 st.session_state.pontuacao_total
-             )
+# Dentro de mostrar_tela_jogo:
+
+# NOVO TRATAMENTO DE FIM DE NÍVEL (Se todas as palavras do nível atual acabaram)
+if indice >= st.session_state.total_palavras_do_nivel: 
+    # MUDANÇA: Se o índice atingir o total de palavras do nível, zera o índice
+    # e exibe a mensagem de fim de jogo/nível.
+    st.session_state.indice_palavra = 0 # Zera para evitar problemas se o usuário tentar avançar
+    st.session_state.total_palavras = 0 # Zera total de palavras acumulado
+    st.session_state.fase_jogo = "finalizado_nivel" # Novo estado para sinalizar fim de nível
+
+# Se o novo estado for detectado:
+if st.session_state.fase_jogo == "finalizado_nivel":
+    st.success(f"🎉 Nível '{st.session_state.nivel_atual}' concluído!")
+    st.markdown(f"Você pode escolher um novo nível. Sua pontuação acumulada é: **{st.session_state.pontuacao_total}**.")
+    st.button("Escolher Novo Nível", on_click=lambda: st.session_state.update(fase_jogo="inicio"))
+    return
+
+# Na exibição da pergunta em andamento (abaixo):
+# ...
+# Progresso
+st.markdown(f"**Pergunta {indice + 1}** de {st.session_state.total_palavras_do_nivel} no **Nível Atual**.")
+st.progress(indice / st.session_state.total_palavras_do_nivel)
+# ...
         
         st.success(f"🥳 Fim da Escavação, **{st.session_state.nome_jogador}**!")
         st.balloons()
