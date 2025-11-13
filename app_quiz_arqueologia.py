@@ -289,12 +289,62 @@ def aplicar_tema(nivel):
     """, unsafe_allow_html=True)
 
 
+    # 2. APLICAÇÃO DE DECORAÇÃO NO TÍTULO
+    
+    # Adiciona o emoji temático ao título do nível
+    if st.session_state.nivel_atual:
+        emoji = tema_config['emoji']
+        st.sidebar.markdown(f"### {emoji} **Nível Atual: {st.session_state.nivel_atual}**")
+    
+    # 3. CSS COMUM (Garantindo Consistência)
+    st.markdown(f"""
+    <style>
+    /* Estilos para Títulos (Herda cor do tema) */
+    h1, h2, h3 {{
+        color: {cor_primaria} !important; 
+        border-bottom: 2px solid #D2B48C;
+        padding-bottom: 5px;
+    }}
+    /* Botões */
+    .stButton>button {{
+        background-color: #6B8E23; 
+        color: white;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+        font-weight: bold;
+    }}
+    /* Área de Dica (Manter sempre claro para máxima legibilidade) */
+    .stMarkdown p {{
+        font-size: 1.2em;
+        padding: 15px;
+        border: 1px solid #D2B48C;
+        background-color: rgba(255, 255, 240, 0.9); /* Fundo quase branco semi-transparente */
+        border-radius: 8px;
+        color: #4B3832; /* Texto escuro para alto contraste na caixa de dica */
+        text-shadow: none;
+    }}
+    /* Cores das Alternativas de Rádio - Forçar cor do texto das opções */
+    .stRadio > div > div > div > label > div {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+    }}
+    /* Alternativa mais específica para o texto das opções do radio */
+    .stRadio label > div:last-child > div {{
+        color: {cor_primaria} !important;
+        text-shadow: {sombra_texto};
+        font-weight: 500;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # --- 4. EXIBIÇÃO DA INTERFACE ---
 # --- 4. EXIBIÇÃO DA INTERFACE ---
 
 def mostrar_tela_inicial():
     """Mostra a tela de seleção de nível."""
     
-    st.title("🗺️ Arqueologia em Camadas: O Quiz")
+    st.title("🗺️ Mistério Arqueológico: O Quiz")
     st.header("Selecione o seu Nível de Descoberta")
     
     # Níveis Regulares
